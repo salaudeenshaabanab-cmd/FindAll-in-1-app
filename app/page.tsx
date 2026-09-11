@@ -64,8 +64,8 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<'catalog' | 'checkout'>('catalog');
   const [toastMessage, setToastMessage] = useState('');
 
-  // Customer support WhatsApp number
-  const WHATSAPP_NUMBER = '+2348147684917';
+  // Updated Customer support WhatsApp number
+  const WHATSAPP_NUMBER = '2348147684917';
 
   // Checkout form state
   const [formData, setFormData] = useState({
@@ -98,7 +98,6 @@ export default function Home() {
       alert('Please fill in all delivery details.');
       return;
     }
-    // Placeholder for Paystack Integration
     alert(`Redirecting to Paystack Secure Checkout for ₦${cart.reduce((sum, i) => sum + i.price, 0).toLocaleString()}... (Paystack SDK will be integrated here)`);
   };
 
@@ -191,23 +190,31 @@ export default function Home() {
       {/* Cart Drawer Modal */}
       {isCartOpen && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '380px', height: '100%', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '-4px 0 25px rgba(0,0,0,0.15)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+          <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '380px', height: '100vh', display: 'flex', flexDirection: 'column', boxShadow: '-4px 0 25px rgba(0,0,0,0.15)' }}>
+            
+            {/* Drawer Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', padding: '16px 20px', flexShrink: 0 }}>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Your Store Cart ({cart.length})</h3>
               <button onClick={() => setIsCartOpen(false)} style={{ background: '#f1f5f9', border: 'none', width: '30px', height: '30px', borderRadius: '50%', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
             </div>
 
-            <div style={{ flexGrow: 1, overflowY: 'auto', padding: '16px 0' }}>
+            {/* Scrollable Items Container */}
+            <div style={{ flex: '1 1 auto', overflowY: 'auto', padding: '16px 20px' }}>
               {cart.length === 0 ? (
-                <div style={{ textAlign: 'center', marginTop: '60px', color: '#64748b' }}>
-                  <p style={{ fontSize: '32px', margin: '0 0 10px' }}>🛒</p>
+                <div style={{ textAlign: 'center', marginTop: '80px', color: '#64748b' }}>
+                  <p style={{ fontSize: '36px', margin: '0 0 10px' }}>🛒</p>
                   <p style={{ fontSize: '14px', fontWeight: 600, margin: 0 }}>Your cart is empty.</p>
                 </div>
               ) : (
                 cart.map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
-                    <div>
-                      <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 4px', color: '#0f172a' }}>{item.title}</p>
+                  <div key={idx} style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+                    <img 
+                      src={item.image} 
+                      alt={item.title} 
+                      style={{ width: '55px', height: '55px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #e2e8f0' }} 
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '12px', fontWeight: 700, margin: '0 0 2px', color: '#0f172a', whiteCode: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</p>
                       <p style={{ fontSize: '12px', color: '#2563eb', fontWeight: 800, margin: 0 }}>₦ {item.price.toLocaleString()}</p>
                     </div>
                   </div>
@@ -215,20 +222,22 @@ export default function Home() {
               )}
             </div>
 
+            {/* Drawer Footer / Checkout Button */}
             {cart.length > 0 && (
-              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '15px', fontWeight: 900, color: '#0f172a' }}>
+              <div style={{ borderTop: '1px solid #e2e8f0', padding: '16px 20px 24px', backgroundColor: '#f8fafc', flexShrink: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '15px', fontWeight: 900, color: '#0f172a' }}>
                   <span>Total:</span>
                   <span>₦ {cart.reduce((sum, i) => sum + i.price, 0).toLocaleString()}</span>
                 </div>
                 <button 
                   onClick={() => { setIsCartOpen(false); setCurrentView('checkout'); }}
-                  style={{ width: '100%', backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', fontSize: '14px', boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.3)' }}
+                  style={{ width: '100%', backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', fontSize: '14px', boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.3)' }}
                 >
                   Proceed to Secure Checkout 🔒
                 </button>
               </div>
             )}
+
           </div>
         </div>
       )}
