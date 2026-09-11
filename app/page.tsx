@@ -20,28 +20,49 @@ const categories = [
 const allInventory = [
   {
     id: '1',
-    title: 'iPhone 14 Pro Max - 256GB (Deep Purple)',
-    price: 980000,
+    title: 'Google Pixel 10 128 GB Black',
+    price: 800000,
     category: 'Phones & Tablets',
-    condition: 'In Stock',
+    condition: 'Used',
+    physicalCondition: 'No cracks',
+    storage: '128 GB',
+    ram: '12 GB',
+    cardSlot: 'No',
+    camera: 'Triple 48 MP / 10.8 MP / 13 MP',
+    location: 'Oyo State, Ibadan',
+    datePosted: 'Aug 9, 2026 at 7:39 AM',
     image: 'https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=600',
-    description: 'Factory unlocked, pristine condition, 100% battery health with complete box and accessories.',
+    description: 'Pristine condition Google Pixel 10 with complete box, amazing battery health and ultra-clear cameras.',
   },
   {
     id: '2',
     title: 'PlayStation 5 Disc Console + 2 Controllers',
     price: 650000,
     category: 'Gaming & Consoles',
-    condition: 'In Stock',
+    condition: 'Brand New',
+    physicalCondition: 'Flawless',
+    storage: '825 GB SSD',
+    ram: '16 GB GDDR6',
+    cardSlot: 'No',
+    camera: 'N/A',
+    location: 'Oyo State, Ibadan',
+    datePosted: 'Aug 10, 2026 at 10:15 AM',
     image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=600',
     description: 'Brand new European region model with dual wireless controllers and ultra-high speed SSD.',
   },
   {
     id: '3',
-    title: 'Nike Mercurial Vapor Pro FG Football Boots (Size 43)',
+    title: 'Nike Mercurial Vapor Pro FG Football Boots',
     price: 45000,
     category: 'Sports Wears & Equipment',
-    condition: 'Low Stock',
+    condition: 'Brand New',
+    physicalCondition: 'Boxed',
+    storage: 'Size 43',
+    ram: 'Firm Ground',
+    cardSlot: 'N/A',
+    camera: 'N/A',
+    location: 'Oyo State, Ibadan',
+    datePosted: 'Aug 11, 2026, 2:00 PM',
     image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600',
     description: 'Professional grade molded studs for firm ground acceleration and precise ball touch.',
   },
@@ -50,7 +71,14 @@ const allInventory = [
     title: 'Organic Glow Vitamin C Face Serum Kit',
     price: 18500,
     category: 'Beauty & Care',
-    condition: 'In Stock',
+    condition: 'Brand New',
+    physicalCondition: 'Sealed',
+    storage: '50ml',
+    ram: 'Organic Formula',
+    cardSlot: 'N/A',
+    camera: 'N/A',
+    location: 'Oyo State, Ibadan',
+    datePosted: 'Aug 11, 2026, 4:30 PM',
     image: 'https://images.unsplash.com/photo-1608248597359-f55c5a08906a?w=600',
     description: 'Advanced brightening formula infused with botanical extracts for radiant, blemish-free skin.',
   },
@@ -61,13 +89,12 @@ export default function Home() {
   const [cart, setCart] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<'catalog' | 'checkout'>('catalog');
+  const [currentView, setCurrentView] = useState<'catalog' | 'details' | 'checkout'>('catalog');
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState('');
 
-  // Customer support WhatsApp number
   const WHATSAPP_NUMBER = '2348147684917';
 
-  // Checkout form state
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -84,12 +111,12 @@ export default function Home() {
   const addToCart = (item: any) => {
     setCart(prevCart => [...prevCart, item]);
     setToastMessage(`Added "${item.title.substring(0, 22)}..." to cart`);
-    setIsCartOpen(true); // Automatically open the cart drawer so the user sees the item
+    setIsCartOpen(true);
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  const openSupportWhatsApp = () => {
-    const message = `Hello FindAll In 1 support! I need assistance with an order/inquiry.`;
+  const openSupportWhatsApp = (customMsg?: string) => {
+    const message = customMsg || `Hello FindAll In 1 support! I need assistance with an order/inquiry.`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
   };
 
@@ -99,7 +126,7 @@ export default function Home() {
       alert('Please fill in all delivery details.');
       return;
     }
-    alert(`Redirecting to Paystack Secure Checkout for ₦${cart.reduce((sum, i) => sum + i.price, 0).toLocaleString()}... (Paystack SDK will be integrated here)`);
+    alert(`Redirecting to Paystack Secure Checkout for ₦${cart.reduce((sum, i) => sum + i.price, 0).toLocaleString()}... (No customer account needed!)`);
   };
 
   return (
@@ -112,9 +139,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Floating Customer Support WhatsApp Icon */}
+      {/* Floating WhatsApp Support Button */}
       <button 
-        onClick={openSupportWhatsApp}
+        onClick={() => openSupportWhatsApp()}
         title="Customer Support"
         style={{
           position: 'fixed',
@@ -140,7 +167,7 @@ export default function Home() {
 
       {/* Top Bar */}
       <div style={{ backgroundColor: '#020617', color: '#93c5fd', fontSize: '11px', padding: '8px 16px', textAlign: 'center', fontWeight: 600 }}>
-        🇳🇬 FindAll In 1 Official Store — Secure Online Checkout & Verified Inventory.
+        🇳🇬 FindAll In 1 Official Store — Pay instantly with Card or Bank Transfer (No account needed for buyers).
       </div>
 
       {/* Header */}
@@ -169,7 +196,7 @@ export default function Home() {
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {currentView === 'checkout' ? (
+            {currentView !== 'catalog' ? (
               <button 
                 onClick={() => setCurrentView('catalog')}
                 style={{ backgroundColor: '#3b82f6', color: '#ffffff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
@@ -193,13 +220,11 @@ export default function Home() {
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', justifyContent: 'flex-end' }}>
           <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '380px', height: '100vh', display: 'flex', flexDirection: 'column', boxShadow: '-4px 0 25px rgba(0,0,0,0.15)' }}>
             
-            {/* Drawer Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', padding: '16px 20px', flexShrink: 0 }}>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Your Store Cart ({cart.length})</h3>
               <button onClick={() => setIsCartOpen(false)} style={{ background: '#f1f5f9', border: 'none', width: '30px', height: '30px', borderRadius: '50%', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
             </div>
 
-            {/* Scrollable Items Container */}
             <div style={{ flex: '1 1 auto', overflowY: 'auto', padding: '16px 20px' }}>
               {cart.length === 0 ? (
                 <div style={{ textAlign: 'center', marginTop: '80px', color: '#64748b' }}>
@@ -209,11 +234,7 @@ export default function Home() {
               ) : (
                 cart.map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
-                    <img 
-                      src={item.image} 
-                      alt={item.title} 
-                      style={{ width: '55px', height: '55px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #e2e8f0' }} 
-                    />
+                    <img src={item.image} alt={item.title} style={{ width: '55px', height: '55px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #e2e8f0' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: '12px', fontWeight: 700, margin: '0 0 2px', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</p>
                       <p style={{ fontSize: '12px', color: '#2563eb', fontWeight: 800, margin: 0 }}>₦ {item.price.toLocaleString()}</p>
@@ -223,7 +244,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* Drawer Footer / Checkout Button */}
             {cart.length > 0 && (
               <div style={{ borderTop: '1px solid #e2e8f0', padding: '16px 20px 24px', backgroundColor: '#f8fafc', flexShrink: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '15px', fontWeight: 900, color: '#0f172a' }}>
@@ -243,10 +263,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Main Views */}
-      {currentView === 'catalog' ? (
+      {/* View 1: Catalog Grid */}
+      {currentView === 'catalog' && (
         <>
-          {/* Hero Banner */}
           <section style={{ maxWidth: '1200px', margin: '20px auto 0', padding: '0 16px' }}>
             <div style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #172554 100%)', borderRadius: '14px', padding: '24px 20px', color: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
               <span style={{ backgroundColor: '#2563eb', fontSize: '9px', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '20px', fontWeight: 800, letterSpacing: '1px' }}>
@@ -261,7 +280,6 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Categories Bar */}
           <section style={{ maxWidth: '1200px', margin: '24px auto 0', padding: '0 16px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}>Browse Store Departments</h3>
             <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -292,7 +310,6 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Products Grid */}
           <section style={{ maxWidth: '1200px', margin: '30px auto 0', padding: '0 16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
@@ -303,7 +320,11 @@ export default function Home() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
               {filteredInventory.map((item) => (
-                <div key={item.id} style={{ backgroundColor: '#ffffff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
+                <div 
+                  key={item.id} 
+                  onClick={() => { setSelectedProduct(item); setCurrentView('details'); }}
+                  style={{ backgroundColor: '#ffffff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}
+                >
                   <div style={{ height: '180px', backgroundColor: '#f1f5f9', position: 'relative' }}>
                     <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <span style={{ position: 'absolute', top: '10px', left: '10px', backgroundColor: '#1e3a8a', color: '#ffffff', fontSize: '10px', padding: '3px 8px', borderRadius: '20px', fontWeight: 700 }}>
@@ -313,10 +334,9 @@ export default function Home() {
                   <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                     <span style={{ fontSize: '10px', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', marginBottom: '4px' }}>{item.category}</span>
                     <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', margin: '0 0 6px', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</h4>
-                    <p style={{ fontSize: '11px', color: '#64748b', margin: '0 0 10px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.description}</p>
-                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#172554', marginBottom: '12px', marginTop: 'auto' }}>₦ {item.price.toLocaleString()}</div>
+                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#172554', marginBottom: '10px', marginTop: 'auto' }}>₦ {item.price.toLocaleString()}</div>
                     <button 
-                      onClick={() => addToCart(item)}
+                      onClick={(e) => { e.stopPropagation(); addToCart(item); }}
                       style={{ width: '100%', backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '12px' }}
                     >
                       Add to Cart
@@ -327,12 +347,95 @@ export default function Home() {
             </div>
           </section>
         </>
-      ) : (
-        /* Dedicated Checkout Page View */
+      )}
+
+      {/* View 2: Detailed Product View (Matches your screenshot style) */}
+      {currentView === 'details' && selectedProduct && (
+        <section style={{ maxWidth: '800px', margin: '20px auto 0', padding: '0 16px' }}>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+            
+            {/* Product Image Header */}
+            <div style={{ width: '100%', height: '350px', backgroundColor: '#0f172a', position: 'relative' }}>
+              <img src={selectedProduct.image} alt={selectedProduct.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', bottom: '12px', left: '12px', background: 'rgba(0,0,0,0.6)', color: '#ffffff', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700 }}>
+                📍 {selectedProduct.location}, {selectedProduct.datePosted}
+              </div>
+            </div>
+
+            {/* Title & Price */}
+            <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '0 0 8px' }}>{selectedProduct.title}</h2>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: '#16a34a', marginBottom: '16px' }}>₦ {selectedProduct.price.toLocaleString()}</div>
+              
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  onClick={() => openSupportWhatsApp(`Hello, I want to make an offer / inquire about "${selectedProduct.title}" priced at ₦${selectedProduct.price.toLocaleString()}`)}
+                  style={{ flex: 1, backgroundColor: '#ffffff', color: '#16a34a', border: '2px solid #16a34a', padding: '12px', borderRadius: '8px', fontWeight: 800, cursor: 'pointer', fontSize: '13px' }}
+                >
+                  💬 Make an Offer
+                </button>
+                <button 
+                  onClick={() => openSupportWhatsApp(`Hello, I want to call regarding "${selectedProduct.title}"`)}
+                  style={{ flex: 1, backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 800, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                  📞 Call / WhatsApp
+                </button>
+              </div>
+
+              <div style={{ marginTop: '14px' }}>
+                <button 
+                  onClick={() => addToCart(selectedProduct)}
+                  style={{ width: '100%', backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '8px', fontWeight: 900, cursor: 'pointer', fontSize: '14px' }}
+                >
+                  Add to Cart & Checkout 🛒
+                </button>
+              </div>
+            </div>
+
+            {/* Specs Grid */}
+            <div style={{ padding: '20px', backgroundColor: '#f8fafc', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+                <p style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, margin: '0 0 2px' }}>Condition</p>
+                <p style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: 0 }}>{selectedProduct.condition}</p>
+              </div>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+                <p style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, margin: '0 0 2px' }}>Physical Condition</p>
+                <p style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: 0 }}>{selectedProduct.physicalCondition}</p>
+              </div>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+                <p style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, margin: '0 0 2px' }}>Internal Storage</p>
+                <p style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: 0 }}>{selectedProduct.storage}</p>
+              </div>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+                <p style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, margin: '0 0 2px' }}>RAM</p>
+                <p style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: 0 }}>{selectedProduct.ram}</p>
+              </div>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+                <p style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, margin: '0 0 2px' }}>Card Slot</p>
+                <p style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: 0 }}>{selectedProduct.cardSlot}</p>
+              </div>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+                <p style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, margin: '0 0 2px' }}>Rear Camera</p>
+                <p style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: 0 }}>{selectedProduct.camera}</p>
+              </div>
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>Description</h4>
+              <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, margin: 0 }}>{selectedProduct.description}</p>
+            </div>
+
+          </div>
+        </section>
+      )}
+
+      {/* View 3: Checkout Page */}
+      {currentView === 'checkout' && (
         <section style={{ maxWidth: '800px', margin: '30px auto 0', padding: '0 16px' }}>
           <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
             <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '0 0 6px' }}>Secure Order Checkout</h2>
-            <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 24px' }}>Review your full item breakdown and fill in your delivery details below.</p>
+            <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 24px' }}>Pay securely via Paystack. No customer sign-up or prior account required.</p>
 
             <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#1e3a8a', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px', marginBottom: '14px' }}>1. Order Summary</h3>
             <div style={{ marginBottom: '24px' }}>
@@ -341,7 +444,7 @@ export default function Home() {
                   <img src={item.image} alt={item.title} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }} />
                   <div style={{ flexGrow: 1 }}>
                     <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 2px', color: '#0f172a' }}>{item.title}</p>
-                    <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>{item.description}</p>
+                    <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>{item.category}</p>
                   </div>
                   <div style={{ fontSize: '14px', fontWeight: 900, color: '#172554' }}>₦ {item.price.toLocaleString()}</div>
                 </div>
