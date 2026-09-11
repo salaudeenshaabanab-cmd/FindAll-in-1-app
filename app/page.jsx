@@ -144,7 +144,7 @@ export default function MasterAdminDashboard() {
 
         {/* RIGHT COLUMN: CUSTOMER ORDERS MANAGEMENT */}
         <div>
-          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '24px' }}>
             <h2 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '14px', color: '#1f2937' }}>🛒 Incoming Customer Orders</h2>
             <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Click status to toggle fulfillment tracking.</p>
             
@@ -176,6 +176,45 @@ export default function MasterAdminDashboard() {
           </div>
         </div>
 
+      </div>
+
+      {/* CUSTOMER STOREFRONT PREVIEW SECTION (WITH DUAL CHECKOUT) */}
+      <div style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginTop: '28px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: '#1f2937' }}>🛍️ Customer Storefront Preview (Dual Checkout Enabled)</h2>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+          {products.map((item) => (
+            <div key={item.id} style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px', backgroundColor: '#fafafa', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <h3 style={{ fontSize: '16px', margin: '0 0 6px 0', color: '#111' }}>{item.name}</h3>
+                <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#059669', margin: '0 0 6px 0' }}>{item.price}</p>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 16px 0' }}>In Stock: {item.stock} units</p>
+              </div>
+
+              {/* Dual Checkouts Buttons Container */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {/* 1. Paystack Button */}
+                <button 
+                  onClick={() => {
+                    alert(`Redirecting to secure Paystack checkout for ${item.name} (${item.price})...`);
+                  }}
+                  style={{ width: '100%', backgroundColor: '#00c3ff', color: '#111', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+                  Pay Online (Paystack) 💳
+                </button>
+
+                {/* 2. WhatsApp Button */}
+                <button 
+                  onClick={() => {
+                    const message = encodeURIComponent(`Hello, I want to order ${item.name} priced at ${item.price}. Is it available?`);
+                    window.open(`https://wa.me/2348147684917?text=${message}`, '_blank');
+                  }}
+                  style={{ width: '100%', backgroundColor: '#25D366', color: '#fff', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+                  Order via WhatsApp 📱
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
     </div>
