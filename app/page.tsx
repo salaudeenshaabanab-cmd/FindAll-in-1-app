@@ -57,6 +57,10 @@ export default function Home() {
   const [cart, setCart] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Replace with your actual business WhatsApp phone number (format: country code + number, e.g., 2348000000000)
+  const WHATSAPP_NUMBER = '+2348147694917';
 
   const filteredInventory = allInventory.filter(item => {
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
@@ -66,23 +70,58 @@ export default function Home() {
 
   const addToCart = (item: any) => {
     setCart([...cart, item]);
-    alert(`Added "${item.title}" to your cart!`);
+    setToastMessage(`Added "${item.title.substring(0, 22)}..." to cart`);
+    setTimeout(() => setToastMessage(''), 3000);
   };
 
   const checkoutOnWhatsApp = () => {
-    if (cart.length === 0) {
-      alert('Your cart is empty!');
-      return;
-    }
+    if (cart.length === 0) return;
     const total = cart.reduce((sum, item) => sum + item.price, 0);
     const itemNames = cart.map(i => `- ${i.title} (₦${i.price.toLocaleString()})`).join('%0A');
     const message = `Hello FindAll In 1! I want to order:%0A${itemNames}%0A*Total: ₦${total.toLocaleString()}*`;
-    window.open(`https://wa.me/2348000000000?text=${message}`, '_blank');
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+  };
+
+  const openDirectWhatsApp = () => {
+    const message = `Hello FindAll In 1! I'm visiting your store and need assistance with an inquiry.`;
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, sans-serif', paddingBottom: '80px' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, sans-serif', paddingBottom: '80px', position: 'relative' }}>
       
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div style={{ position: 'fixed', top: '15px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#0f172a', color: '#ffffff', padding: '10px 20px', borderRadius: '30px', fontSize: '12px', fontWeight: 700, zIndex: 200, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.2)', border: '1px solid #334155' }}>
+          ✨ {toastMessage}
+        </div>
+      )}
+
+      {/* Floating WhatsApp Quick-Chat Button */}
+      <button 
+        onClick={openDirectWhatsApp}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          backgroundColor: '#25D366',
+          color: '#ffffff',
+          border: 'none',
+          borderRadius: '50px',
+          padding: '12px 20px',
+          fontSize: '14px',
+          fontWeight: 800,
+          cursor: 'pointer',
+          zIndex: 99,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: '0 4px 12px rgba(37, 211, 102, 0.4)'
+        }}
+      >
+        <span style={{ fontSize: '18px' }}>💬</span> Chat with Us
+      </button>
+
       {/* Top Banner */}
       <div style={{ backgroundColor: '#020617', color: '#93c5fd', fontSize: '11px', padding: '8px 16px', textAlign: 'center', fontWeight: 600 }}>
         🇳🇬 FindAll In 1 Official Store — Direct Verified Inventory & Professional Services.
@@ -113,7 +152,7 @@ export default function Home() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button 
-              onClick={() => setIsCartOpen(!isCartOpen)}
+              onClick={() => setIsCartOpen(true)}
               style={{ backgroundColor: '#3b82f6', color: '#ffffff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               🛒 Cart ({cart.length})
@@ -124,21 +163,25 @@ export default function Home() {
 
       {/* Cart Drawer Modal */}
       {isCartOpen && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '380px', height: '100%', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '-4px 0 15px rgba(0,0,0,0.1)' }}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '380px', height: '100%', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '-4px 0 25px rgba(0,0,0,0.15)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Your Store Cart ({cart.length})</h3>
-              <button onClick={() => setIsCartOpen(false)} style={{ background: 'none', border: 'none', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
+              <button onClick={() => setIsCartOpen(false)} style={{ background: '#f1f5f9', border: 'none', width: '30px', height: '30px', borderRadius: '50%', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
             </div>
 
             <div style={{ flexGrow: 1, overflowY: 'auto', padding: '16px 0' }}>
               {cart.length === 0 ? (
-                <p style={{ textAlign: 'center', color: '#64748b', fontSize: '14px', marginTop: '40px' }}>Your cart is empty.</p>
+                <div style={{ textAlign: 'center', marginTop: '60px', color: '#64748b' }}>
+                  <p style={{ fontSize: '32px', margin: '0 0 10px' }}>🛒</p>
+                  <p style={{ fontSize: '14px', fontWeight: 600, margin: 0 }}>Your cart is empty.</p>
+                  <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Add products from the catalog to checkout.</p>
+                </div>
               ) : (
                 cart.map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
                     <div>
-                      <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 4px' }}>{item.title}</p>
+                      <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 4px', color: '#0f172a' }}>{item.title}</p>
                       <p style={{ fontSize: '12px', color: '#2563eb', fontWeight: 800, margin: 0 }}>₦ {item.price.toLocaleString()}</p>
                     </div>
                   </div>
@@ -148,13 +191,13 @@ export default function Home() {
 
             {cart.length > 0 && (
               <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '15px', fontWeight: 900 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '15px', fontWeight: 900, color: '#0f172a' }}>
                   <span>Total:</span>
                   <span>₦ {cart.reduce((sum, i) => sum + i.price, 0).toLocaleString()}</span>
                 </div>
                 <button 
                   onClick={checkoutOnWhatsApp}
-                  style={{ width: '100%', backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', fontSize: '14px' }}
+                  style={{ width: '100%', backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', fontSize: '14px', boxShadow: '0 4px 6px -1px rgba(22, 163, 74, 0.3)' }}
                 >
                   Checkout via WhatsApp 💬
                 </button>
@@ -248,7 +291,7 @@ export default function Home() {
                   <div style={{ fontSize: '16px', fontWeight: 900, color: '#172554', marginBottom: '12px', marginTop: 'auto' }}>₦ {item.price.toLocaleString()}</div>
                   <button 
                     onClick={() => addToCart(item)}
-                    style={{ width: '100%', backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '12px' }}
+                    style={{ width: '100%', backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '12px', transition: 'background 0.2s' }}
                   >
                     Add to Cart / Order
                   </button>
