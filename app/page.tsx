@@ -64,7 +64,7 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<'catalog' | 'checkout'>('catalog');
   const [toastMessage, setToastMessage] = useState('');
 
-  // Updated Customer support WhatsApp number
+  // Customer support WhatsApp number
   const WHATSAPP_NUMBER = '2348147684917';
 
   // Checkout form state
@@ -214,7 +214,7 @@ export default function Home() {
                       style={{ width: '55px', height: '55px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #e2e8f0' }} 
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '12px', fontWeight: 700, margin: '0 0 2px', color: '#0f172a', whiteCode: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</p>
+                      <p style={{ fontSize: '12px', fontWeight: 700, margin: '0 0 2px', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</p>
                       <p style={{ fontSize: '12px', color: '#2563eb', fontWeight: 800, margin: 0 }}>₦ {item.price.toLocaleString()}</p>
                     </div>
                   </div>
@@ -405,3 +405,6 @@ export default function Home() {
     </div>
   );
 }
+
+
+
