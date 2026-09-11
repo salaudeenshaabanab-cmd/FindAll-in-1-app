@@ -82,8 +82,9 @@ export default function Home() {
   });
 
   const addToCart = (item: any) => {
-    setCart([...cart, item]);
+    setCart(prevCart => [...prevCart, item]);
     setToastMessage(`Added "${item.title.substring(0, 22)}..." to cart`);
+    setIsCartOpen(true); // Automatically open the cart drawer so the user sees the item
     setTimeout(() => setToastMessage(''), 3000);
   };
 
@@ -405,6 +406,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
