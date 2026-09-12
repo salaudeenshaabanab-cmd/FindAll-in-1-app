@@ -2,64 +2,146 @@
 
 import { useState } from 'react';
 
-export default function AdminPage() {
+const allInventory = [
+  {
+    id: '1',
+    title: 'Google Pixel 10 128 GB Black',
+    price: 800000,
+    category: 'Phones & Tablets',
+    condition: 'Used',
+    image: 'https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=600',
+  },
+  {
+    id: '2',
+    title: 'PlayStation 5 Disc Console + 2 Controllers',
+    price: 650000,
+    category: 'Gaming & Consoles',
+    condition: 'Brand New',
+    image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=600',
+  },
+];
+
+export default function Home() {
+  const [currentView, setCurrentView] = useState('catalog'); // 'catalog', 'admin', or 'checkout'
+  const [inventory, setInventory] = useState(allInventory);
+  const [cart, setCart] = useState([]);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [passcode, setPasscode] = useState('');
+  
+  // New product form state for admin
+  const [newTitle, setNewTitle] = useState('');
+  const [newPrice, setNewPrice] = useState('');
 
-  // Simple passcode gate for your store admin
-  const handleLogin = (e) => {
+  const handleAddProduct = (e) => {
     e.preventDefault();
-    if (passcode === '1234') {
-      setIsAdminLoggedIn(true);
-    } else {
-      alert('Incorrect passcode! Try "1234".');
-    }
+    if (!newTitle || !newPrice) return;
+    const newItem = {
+      id: Date.now().toString(),
+      title: newTitle,
+      price: Number(newPrice),
+      category: 'Gadgets & Accessories',
+      condition: 'Brand New',
+      image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600',
+    };
+    setInventory([newItem, ...inventory]);
+    setNewTitle('');
+    setNewPrice('');
+    alert('Product added successfully to store inventory!');
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, sans-serif', padding: '20px' }}>
-      <div style={{ maxWidth: '600px', margin: '40px auto', backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 900, margin: 0 }}>FindAll In 1 — Admin Portal ⚙️</h1>
-          <a href="/" style={{ fontSize: '13px', color: '#2563eb', fontWeight: 'bold', textDecoration: 'none' }}>← Back to Store</a>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, sans-serif', paddingBottom: '50px' }}>
+      
+      {/* Header */}
+      <header style={{ backgroundColor: '#1e3a8a', color: '#ffffff', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ fontSize: '18px', fontWeight: 900, margin: 0, cursor: 'pointer' }} onClick={() => setCurrentView('catalog')}>
+          FindAll In 1 🛒
+        </h1>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            onClick={() => setCurrentView('catalog')} 
+            style={{ background: currentView === 'catalog' ? '#2563eb' : 'transparent', color: '#fff', border: '1px solid #60a5fa', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            Store
+          </button>
+          <button 
+            onClick={() => setCurrentView('admin')} 
+            style={{ background: currentView === 'admin' ? '#2563eb' : 'transparent', color: '#fff', border: '1px solid #60a5fa', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            Admin ⚙️
+          </button>
         </div>
+      </header>
 
-        {!isAdminLoggedIn ? (
-          <form onSubmit={handleLogin}>
-            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>Please enter your admin passcode to manage inventory.</p>
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Admin Passcode (Default: 1234)</label>
+      {/* VIEW 1: STORE CATALOG */}
+      {currentView === 'catalog' && (
+        <div style={{ maxWidth: '1000px', margin: '20px auto', padding: '0 16px' }}>
+          <h2>Store Inventory</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px', marginTop: '16px' }}>
+            {inventory.map(item => (
+              <div key={item.id} style={{ background: '#fff', borderRadius: '10px', padding: '12px', border: '1px solid #cbd5e1' }}>
+                <img src={item.image} alt={item.title} style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '6px' }} />
+                <h4 style={{ fontSize: '13px', margin: '8px 0 4px' }}>{item.title}</h4>
+                <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e3a8a', margin: '0 0 10px' }}>₦ {item.price.toLocaleString()}</p>
+                <button 
+                  onClick={() => setCart([...cart, item])}
+                  style={{ width: '100%', background: '#2563eb', color: '#fff', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  Add to Cart ({cart.length})
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 2: ADMIN PANEL */}
+      {currentView === 'admin' && (
+        <div style={{ maxWidth: '600px', margin: '30px auto', background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
+          <h2>Admin Dashboard ⚙️</h2>
+          
+          {!isAdminLoggedIn ? (
+            <form onSubmit={(e) => { e.preventDefault(); if(passcode === '1234') setIsAdminLoggedIn(true); else alert('Wrong passcode. Use 1234'); }}>
+              <p style={{ fontSize: '13px', color: '#64748b' }}>Enter passcode (1234) to manage products:</p>
               <input 
                 type="password" 
-                value={passcode}
+                placeholder="Passcode" 
+                value={passcode} 
                 onChange={(e) => setPasscode(e.target.value)}
-                placeholder="Enter passcode"
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }}
+                style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
               />
-            </div>
-            <button type="submit" style={{ width: '100%', backgroundColor: '#1e3a8a', color: '#ffffff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 800, cursor: 'pointer', fontSize: '14px' }}>
-              Login to Admin
-            </button>
-          </form>
-        ) : (
-          <div>
-            <div style={{ backgroundColor: '#eff6ff', padding: '12px 16px', borderRadius: '10px', marginBottom: '20px' }}>
-              <p style={{ fontSize: '13px', fontWeight: 700, color: '#1e3a8a', margin: 0 }}>🟢 Authenticated as Store Administrator</p>
-            </div>
-            <h3 style={{ fontSize: '15px', fontWeight: 800, marginBottom: '10px' }}>Quick Actions</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button onClick={() => alert('Feature coming soon: Add new inventory item modal.')} style={{ padding: '12px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}>
-                ➕ Add New Product to Inventory
+              <button type="submit" style={{ width: '100%', background: '#1e3a8a', color: '#fff', padding: '10px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+                Login
               </button>
-              <button onClick={() => alert('All current inventory items are loaded from app/page.jsx static array.')} style={{ padding: '12px', backgroundColor: '#f1f5f9', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}>
-                📦 View Live Inventory Status
-              </button>
+            </form>
+          ) : (
+            <div>
+              <p style={{ color: '#16a34a', fontWeight: 'bold' }}>🟢 Logged in as Admin</p>
+              <h3 style={{ marginTop: '20px' }}>Add New Product</h3>
+              <form onSubmit={handleAddProduct}>
+                <input 
+                  type="text" 
+                  placeholder="Product Title" 
+                  value={newTitle} 
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                />
+                <input 
+                  type="number" 
+                  placeholder="Price in Naira" 
+                  value={newPrice} 
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                />
+                <button type="submit" style={{ width: '100%', background: '#16a34a', color: '#fff', padding: '10px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+                  Publish Product
+                </button>
+              </form>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-      </div>
     </div>
   );
 }
