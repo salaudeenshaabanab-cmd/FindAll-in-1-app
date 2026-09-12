@@ -102,7 +102,6 @@ export default function Home() {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
   };
 
-  // Instant WhatsApp Order Submission Handler (Nationwide/Worldwide)
   const handleWhatsAppCheckout = (e) => {
     e.preventDefault();
     if (!formData.fullName || !formData.phone || !formData.address || !formData.city || !formData.state) {
@@ -213,12 +212,12 @@ export default function Home() {
       {/* Cart Drawer Modal */}
       {isCartOpen && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15,23,42,0.5)', zIndex: 200, display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '380px', height: '100vh', display: 'flex', flexDirection: 'column', boxShadow: '-5px 0 25px rgba(0,0,0,0.15)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', padding: '16px 20px', backgroundColor: '#f8fafc' }}>
+          <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '380px', height: '100%', display: 'flex', flexDirection: 'column', boxShadow: '-5px 0 25px rgba(0,0,0,0.15)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', padding: '16px 20px', backgroundColor: '#f8fafc', flexShrink: 0 }}>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Shopping Cart ({cart.length})</h3>
               <button onClick={() => setIsCartOpen(false)} style={{ background: '#e2e8f0', border: 'none', width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
             </div>
-            <div style={{ flex: '1 1 auto', overflowY: 'auto', padding: '16px 20px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', WebkitOverflowScrolling: 'touch' }}>
               {cart.length === 0 ? (
                 <p style={{ textAlign: 'center', color: '#64748b', marginTop: '50px' }}>Your cart is empty.</p>
               ) : (
@@ -234,7 +233,7 @@ export default function Home() {
               )}
             </div>
             {cart.length > 0 && (
-              <div style={{ borderTop: '1px solid #e2e8f0', padding: '20px', backgroundColor: '#f8fafc' }}>
+              <div style={{ borderTop: '1px solid #e2e8f0', padding: '20px', backgroundColor: '#f8fafc', flexShrink: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '15px', fontWeight: 800 }}>
                   <span>Total:</span>
                   <span style={{ color: '#0284c7' }}>₦ {cart.reduce((sum, i) => sum + i.price, 0).toLocaleString()}</span>
@@ -473,7 +472,7 @@ export default function Home() {
 
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>Description</label>
-                  <textarea placeholder="Describe specifications..." rows="3" value={newDescription} onChange={e => setNewDescription(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd50e1', fontSize: '13px', fontFamily: 'inherit' }}></textarea>
+                  <textarea placeholder="Describe specifications..." rows="3" value={newDescription} onChange={e => setNewDescription(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', fontFamily: 'inherit' }}></textarea>
                 </div>
 
                 <button type="submit" style={{ width: '100%', backgroundColor: '#0284c7', color: '#fff', padding: '12px', border: 'none', borderRadius: '10px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(2,132,199,0.3)' }}>Publish Listing</button>
@@ -489,7 +488,7 @@ export default function Home() {
           <span style={{ fontSize: '18px' }}>🏠</span> Home
         </button>
         <button onClick={() => setIsCartOpen(true)} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: '#64748b', fontSize: '11px', fontWeight: '700', gap: '2px' }}>
-          <span style={{ fontSize: '18px' }}>🛒</span> Cart ({cart.length})
+          <span style={{ fontSize: '18px' }}>🛒</span> Cart ({cart.length})</li>
         </button>
         <button onClick={() => openSupportWhatsApp()} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: '#25D366', fontSize: '11px', fontWeight: 700, gap: '2px' }}>
           <span style={{ fontSize: '18px' }}>💬</span> Support
