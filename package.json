@@ -1,19 +1,8 @@
 {
-  "name": "findallin1app",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
-    "react": "18.x",
-    "react-dom": "18.x",
-    "next": "14.x"
+    "@supabase/supabase-js": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
   }
-}
-
 }
