@@ -1,21 +1,14 @@
-import type { Metadata } from 'next'
 import './globals.css'
 
-export const metadata: Metadata = {
-  title: 'FindAll In 1 - Official Store',
-  description: 'Your trusted store catalog',
+export const metadata = {
+  title: 'FindAll-in-1 Store',
+  description: 'E-commerce Admin Dashboard & Storefront',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="bg-slate-50 text-slate-900 antialiased">
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   )
 }
