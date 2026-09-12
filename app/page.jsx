@@ -31,6 +31,7 @@ export default function Home() {
   const [currentView, setCurrentView] = useState('catalog'); // catalog, details, checkout, admin
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Admin state & form inputs
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -57,7 +58,21 @@ export default function Home() {
     if (params.get('admin') === 'true') {
       setCurrentView('admin');
     }
+
+    // Check if URL has a product parameter to open directly (e.g. ?product=123)
+    const productId = params.get('product');
+    if (productId) {
+      loadProductById(productId);
+    }
   }, []);
+
+  const loadProductById = async (id) => {
+    const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
+    if (data) {
+      setSelectedProduct(data);
+      setCurrentView('details');
+    }
+  };
 
   const fetchProducts = async () => {
     const { data, error } = await supabase.from('products').select('*').order('id', { ascending: false });
@@ -138,6 +153,17 @@ export default function Home() {
     }
   };
 
+  const copyProductLink = (item) => {
+    const productUrl = `${window.location.origin}/?product=${item.id}`;
+    navigator.clipboard.writeText(productUrl);
+    setCopiedLink(true);
+    setToastMessage(`Copied link for "${item.title.substring(0, 15)}..."`);
+    setTimeout(() => {
+      setCopiedLink(false);
+      setToastMessage('');
+    }, 3000);
+  };
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f0f9ff', color: '#0f172a', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', paddingBottom: '90px' }}>
       
@@ -152,7 +178,7 @@ export default function Home() {
       <div style={{ backgroundColor: '#0284c7', color: '#ffffff', padding: '16px 16px 20px', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 2px 8px rgba(2,132,199,0.15)' }}>
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setCurrentView('catalog')}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => { setSelectedProduct(null); setCurrentView('catalog'); window.history.pushState({}, '', window.location.pathname); }}>
               <h1 style={{ fontSize: '20px', fontWeight: 900, margin: 0, letterSpacing: '-0.5px', color: '#fff' }}>FindAll <span style={{ fontWeight: 300, color: '#e0f2fe' }}>In 1</span></h1>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -216,7 +242,6 @@ export default function Home() {
       {currentView === 'catalog' && (
         <div style={{ maxWidth: '900px', margin: '16px auto', padding: '0 12px' }}>
           
-          {/* Clean Customer Quick Action Cards (No admin buttons here) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '20px' }}>
             <div onClick={() => openSupportWhatsApp("Hello FindAll In 1, I need assistance finding a product.")} style={{ backgroundColor: '#ffffff', padding: '14px', borderRadius: '14px', textAlign: 'center', border: '1px solid #e2e8f0', cursor: 'pointer', boxShadow: '0 2px 4px rgba(2,132,199,0.03)' }}>
               <div style={{ fontSize: '20px', marginBottom: '4px' }}>💬</div>
@@ -250,7 +275,15 @@ export default function Home() {
               </div>
             ) : (
               filteredInventory.map((item) => (
-                <div key={item.id} onClick={() => { setSelectedProduct(item); setCurrentView('details'); }} style={{ backgroundColor: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 5px rgba(0,0,0,0.03)' }}>
+                <div 
+                  key={item.id} 
+                  onClick={() => { 
+                    setSelectedProduct(item); 
+                    setCurrentView('details'); 
+                    window.history.pushState({}, '', `?product=${item.id}`);
+                  }} 
+                  style={{ backgroundColor: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 5px rgba(0,0,0,0.03)' }}
+                >
                   <div style={{ position: 'relative' }}>
                     <img src={item.image} alt={item.title} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
                     <span style={{ position: 'absolute', top: '8px', left: '8px', background: item.condition === 'Brand New' ? '#0284c7' : '#f59e0b', color: '#fff', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
@@ -266,6 +299,7 @@ export default function Home() {
                       <div style={{ fontSize: '14px', fontWeight: 900, color: '#0284c7', marginBottom: '8px' }}>₦ {item.price.toLocaleString()}</div>
                       <div style={{ display: 'flex', gap: '4px' }}>
                         <button onClick={(e) => { e.stopPropagation(); addToCart(item); }} style={{ flex: 1, backgroundColor: '#0284c7', color: '#ffffff', border: 'none', padding: '6px', borderRadius: '6px', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}>Buy</button>
+                        <button onClick={(e) => { e.stopPropagation(); copyProductLink(item); }} title="Copy Product Link" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', border: 'none', padding: '6px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}>🔗</button>
                         {isAdminLoggedIn && (
                           <button onClick={(e) => { e.stopPropagation(); handleDeleteProduct(item.id); }} style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: 'none', padding: '6px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}>🗑️</button>
                         )}
@@ -282,6 +316,16 @@ export default function Home() {
       {/* PRODUCT DETAILS VIEW */}
       {currentView === 'details' && selectedProduct && (
         <div style={{ maxWidth: '700px', margin: '20px auto', padding: '0 12px' }}>
+          <button 
+            onClick={() => { 
+              setCurrentView('catalog'); 
+              window.history.pushState({}, '', window.location.pathname);
+            }} 
+            style={{ marginBottom: '12px', background: '#e2e8f0', border: 'none', padding: '8px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
+          >
+            ← Back to Store
+          </button>
+          
           <div style={{ background: '#ffffff', borderRadius: '16px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(2,132,199,0.05)' }}>
             <img src={selectedProduct.image} alt={selectedProduct.title} style={{ width: '100%', height: '300px', objectFit: 'cover' }} />
             <div style={{ padding: '20px' }}>
@@ -293,9 +337,14 @@ export default function Home() {
               <h3 style={{ color: '#0284c7', fontSize: '22px', fontWeight: 900, marginBottom: '14px' }}>₦ {selectedProduct.price.toLocaleString()}</h3>
               <p style={{ color: '#475569', fontSize: '13px', lineHeight: '1.5', marginBottom: '20px', background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>{selectedProduct.description}</p>
               
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => addToCart(selectedProduct)} style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', padding: '12px', border: 'none', borderRadius: '10px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(2,132,199,0.3)' }}>Add to Cart</button>
-                <button onClick={() => openSupportWhatsApp(`Hello FindAll In 1, I am inquiring about "${selectedProduct.title}" priced at ₦${selectedProduct.price.toLocaleString()}`)} style={{ backgroundColor: '#25D366', color: '#fff', padding: '12px 16px', border: 'none', borderRadius: '10px', fontWeight: 800, fontSize: '14px', cursor: 'pointer' }}>💬 WhatsApp</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={() => addToCart(selectedProduct)} style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', padding: '12px', border: 'none', borderRadius: '10px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(2,132,199,0.3)' }}>Add to Cart</button>
+                  <button onClick={() => openSupportWhatsApp(`Hello FindAll In 1, I am inquiring about "${selectedProduct.title}" priced at ₦${selectedProduct.price.toLocaleString()}`)} style={{ backgroundColor: '#25D366', color: '#fff', padding: '12px 16px', border: 'none', borderRadius: '10px', fontWeight: 800, fontSize: '14px', cursor: 'pointer' }}>💬 WhatsApp</button>
+                </div>
+                <button onClick={() => copyProductLink(selectedProduct)} style={{ width: '100%', backgroundColor: '#f1f5f9', color: '#0f172a', border: '1px solid #cbd5e1', padding: '10px', borderRadius: '10px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
+                  🔗 Copy Shareable Product Link
+                </button>
               </div>
             </div>
           </div>
@@ -324,7 +373,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* ADMIN PANEL (Hidden from customers, only accessible via ?admin=true url) */}
+      {/* ADMIN PANEL */}
       {currentView === 'admin' && (
         <div style={{ maxWidth: '600px', margin: '30px auto', background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #cbd5e1', boxShadow: '0 10px 25px rgba(2,132,199,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -394,9 +443,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Customer-Friendly Sticky Bottom Navigation Bar (No admin or sell buttons) */}
+      {/* Customer-Friendly Sticky Bottom Navigation Bar */}
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-around', padding: '10px 0', zIndex: 150, boxShadow: '0 -2px 10px rgba(0,0,0,0.04)' }}>
-        <button onClick={() => setCurrentView('catalog')} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: currentView === 'catalog' ? '#0284c7' : '#64748b', fontSize: '11px', fontWeight: 700, gap: '2px' }}>
+        <button onClick={() => { setSelectedProduct(null); setCurrentView('catalog'); window.history.pushState({}, '', window.location.pathname); }} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: currentView === 'catalog' ? '#0284c7' : '#64748b', fontSize: '11px', fontWeight: 700, gap: '2px' }}>
           <span style={{ fontSize: '18px' }}>🏠</span> Home
         </button>
         <button onClick={() => setIsCartOpen(true)} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: '#64748b', fontSize: '11px', fontWeight: '700', gap: '2px' }}>
