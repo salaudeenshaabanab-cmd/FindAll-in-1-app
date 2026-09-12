@@ -40,6 +40,7 @@ export default function Home() {
   const [newPrice, setNewPrice] = useState('');
   const [newCategory, setNewCategory] = useState('Phones & Tablets');
   const [newCondition, setNewCondition] = useState('Brand New');
+  const [newLocation, setNewLocation] = useState('Nationwide Delivery (Nigeria)');
   const [newDescription, setNewDescription] = useState('');
   const [newImage, setNewImage] = useState('');
 
@@ -49,7 +50,8 @@ export default function Home() {
     fullName: '',
     phone: '',
     address: '',
-    city: 'Ibadan',
+    city: '',
+    state: '',
   });
 
   useEffect(() => {
@@ -59,7 +61,6 @@ export default function Home() {
       setCurrentView('admin');
     }
 
-    // Check if URL has a product parameter to open directly (e.g. ?product=123)
     const productId = params.get('product');
     if (productId) {
       loadProductById(productId);
@@ -101,13 +102,20 @@ export default function Home() {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
   };
 
-  const handlePaystackPayment = (e) => {
+  // Instant WhatsApp Order Submission Handler (Nationwide/Worldwide)
+  const handleWhatsAppCheckout = (e) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.phone || !formData.address) {
-      alert('Please fill in all delivery details.');
+    if (!formData.fullName || !formData.phone || !formData.address || !formData.city || !formData.state) {
+      alert('Please fill in all delivery details (including City and State/Country).');
       return;
     }
-    alert(`Processing secure order for ₦${cart.reduce((sum, i) => sum + i.price, 0).toLocaleString()}. Redirecting to payment...`);
+
+    const cartItemsText = cart.map((item, idx) => `%0A- ${item.title} (₦${item.price.toLocaleString()})`).join('');
+    const totalPrice = cart.reduce((sum, i) => sum + i.price, 0).toLocaleString();
+
+    const orderMessage = `*NEW ORDER - FindAll In 1*%0A%0A*Customer Details:*%0A- Name: ${encodeURIComponent(formData.fullName)}%0A- Phone: ${encodeURIComponent(formData.phone)}%0A- Address: ${encodeURIComponent(formData.address)}%0A- City: ${encodeURIComponent(formData.city)}%0A- State/Country: ${encodeURIComponent(formData.state)}%0A%0A*Order Summary:*${cartItemsText}%0A%0A*Total Amount: ₦${totalPrice}*%0A%0APlease confirm my order and shipping!`;
+
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${orderMessage}`, '_blank');
   };
 
   const handleAddProduct = async (e) => {
@@ -120,7 +128,7 @@ export default function Home() {
       price: Number(newPrice),
       category: newCategory,
       condition: newCondition,
-      location: 'Ibadan, Oyo State',
+      location: newLocation || 'Nationwide Delivery',
       image: newImage || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600',
       description: newDescription || 'Verified quality product listed on FindAll In 1 marketplace.',
     };
@@ -294,6 +302,7 @@ export default function Home() {
                     <div>
                       <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 700, marginBottom: '2px', textTransform: 'uppercase' }}>{item.category}</div>
                       <h4 style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 6px', color: '#0f172a', lineHeight: '1.25', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</h4>
+                      {item.location && <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '6px' }}>📍 {item.location}</div>}
                     </div>
                     <div>
                       <div style={{ fontSize: '14px', fontWeight: 900, color: '#0284c7', marginBottom: '8px' }}>₦ {item.price.toLocaleString()}</div>
@@ -334,6 +343,7 @@ export default function Home() {
                 <span style={{ background: selectedProduct.condition === 'Brand New' ? '#e0f2fe' : '#fef3c7', color: selectedProduct.condition === 'Brand New' ? '#0284c7' : '#d97706', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 800 }}>{selectedProduct.condition}</span>
               </div>
               <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '8px 0' }}>{selectedProduct.title}</h2>
+              {selectedProduct.location && <p style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, marginBottom: '8px' }}>📍 Shipping / Location: {selectedProduct.location}</p>}
               <h3 style={{ color: '#0284c7', fontSize: '22px', fontWeight: 900, marginBottom: '14px' }}>₦ {selectedProduct.price.toLocaleString()}</h3>
               <p style={{ color: '#475569', fontSize: '13px', lineHeight: '1.5', marginBottom: '20px', background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>{selectedProduct.description}</p>
               
@@ -354,8 +364,12 @@ export default function Home() {
       {/* CHECKOUT VIEW */}
       {currentView === 'checkout' && (
         <div style={{ maxWidth: '550px', margin: '30px auto', background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(2,132,199,0.05)' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '16px', color: '#0f172a' }}>Checkout Order 📦</h2>
-          <form onSubmit={handlePaystackPayment}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>Complete Your Order 📦</h2>
+            <button onClick={() => setCurrentView('catalog')} style={{ background: '#e2e8f0', border: 'none', padding: '6px 10px', borderRadius: '6px', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}>Back</button>
+          </div>
+          
+          <form onSubmit={handleWhatsAppCheckout}>
             <div style={{ marginBottom: '12px' }}>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>Full Name</label>
               <input type="text" placeholder="e.g. Salaudeen Adegbola" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
@@ -364,11 +378,31 @@ export default function Home() {
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>Phone Number</label>
               <input type="tel" placeholder="e.g. 08147684917" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
             </div>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>Delivery Address (Ibadan)</label>
-              <input type="text" placeholder="e.g. UI / Bodija Area, Ibadan" required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>Delivery Street Address</label>
+              <input type="text" placeholder="e.g. No 12, Allen Avenue" required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
             </div>
-            <button type="submit" style={{ width: '100%', backgroundColor: '#0284c7', color: '#fff', padding: '12px', border: 'none', borderRadius: '10px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(2,132,199,0.3)' }}>Pay Securely via Paystack</button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>City / Town</label>
+                <input type="text" placeholder="e.g. Ikeja / Ibadan" required value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>State / Country</label>
+                <input type="text" placeholder="e.g. Lagos State" required value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+              </div>
+            </div>
+            
+            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Cart Summary ({cart.length} items):</div>
+              <div style={{ fontSize: '14px', fontWeight: 900, color: '#0284c7' }}>
+                Total: ₦ {cart.reduce((sum, i) => sum + i.price, 0).toLocaleString()}
+              </div>
+            </div>
+
+            <button type="submit" style={{ width: '100%', backgroundColor: '#25D366', color: '#fff', padding: '14px', border: 'none', borderRadius: '10px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(37,211,102,0.3)' }}>
+              💬 Send Order via WhatsApp
+            </button>
           </form>
         </div>
       )}
@@ -419,11 +453,17 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>Category</label>
-                  <select value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}>
-                    {categories.filter(c => c.name !== 'All').map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}
-                  </select>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>Category</label>
+                    <select value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}>
+                      {categories.filter(c => c.name !== 'All').map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>Location / Shipping</label>
+                    <input type="text" placeholder="e.g. Nationwide Delivery" value={newLocation} onChange={e => setNewLocation(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+                  </div>
                 </div>
 
                 <div style={{ marginBottom: '12px' }}>
@@ -433,7 +473,7 @@ export default function Home() {
 
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>Description</label>
-                  <textarea placeholder="Describe specifications..." rows="3" value={newDescription} onChange={e => setNewDescription(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', fontFamily: 'inherit' }}></textarea>
+                  <textarea placeholder="Describe specifications..." rows="3" value={newDescription} onChange={e => setNewDescription(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd50e1', fontSize: '13px', fontFamily: 'inherit' }}></textarea>
                 </div>
 
                 <button type="submit" style={{ width: '100%', backgroundColor: '#0284c7', color: '#fff', padding: '12px', border: 'none', borderRadius: '10px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(2,132,199,0.3)' }}>Publish Listing</button>
