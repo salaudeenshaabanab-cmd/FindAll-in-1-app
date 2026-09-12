@@ -488,7 +488,7 @@ export default function Home() {
           <span style={{ fontSize: '18px' }}>🏠</span> Home
         </button>
         <button onClick={() => setIsCartOpen(true)} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: '#64748b', fontSize: '11px', fontWeight: '700', gap: '2px' }}>
-          <span style={{ fontSize: '18px' }}>🛒</span> Cart ({cart.length})</li>
+          <span style={{ fontSize: '18px' }}>🛒</span> Cart ({cart.length})
         </button>
         <button onClick={() => openSupportWhatsApp()} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: '#25D366', fontSize: '11px', fontWeight: 700, gap: '2px' }}>
           <span style={{ fontSize: '18px' }}>💬</span> Support
