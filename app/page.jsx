@@ -26,8 +26,10 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [inventory, setInventory] = useState([]);
   const [cart, setCart] = useState([]); 
+  const [wishlist, setWishlist] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [currentView, setCurrentView] = useState('catalog'); // catalog, details, checkout, admin
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
@@ -95,6 +97,19 @@ export default function Home() {
     setToastMessage(`Added "${item.title.substring(0, 18)}..." to cart`);
     setIsCartOpen(true);
     setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  const toggleWishlist = (item, e) => {
+    if (e) e.stopPropagation();
+    const exists = wishlist.some(w => w.id === item.id);
+    if (exists) {
+      setWishlist(wishlist.filter(w => w.id !== item.id));
+      setToastMessage(`Removed from wishlist`);
+    } else {
+      setWishlist([...wishlist, item]);
+      setToastMessage(`Added to wishlist ❤️`);
+    }
+    setTimeout(() => setToastMessage(''), 2500);
   };
 
   const openSupportWhatsApp = (customMsg) => {
@@ -188,9 +203,14 @@ export default function Home() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => { setSelectedProduct(null); setCurrentView('catalog'); window.history.pushState({}, '', window.location.pathname); }}>
               <h1 style={{ fontSize: '22px', fontWeight: 900, margin: 0, letterSpacing: '-0.5px', color: '#fff' }}>FindAll <span style={{ fontWeight: 300, color: '#e0f2fe' }}>In 1</span></h1>
             </div>
-            <button onClick={() => setIsCartOpen(true)} style={{ backgroundColor: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '8px 14px', borderRadius: '24px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', backdropFilter: 'blur(4px)' }}>
-              🛒 <span style={{ backgroundColor: '#ffffff', color: '#0284c7', padding: '1px 6px', borderRadius: '10px', fontSize: '11px', fontWeight: 900 }}>{cart.length}</span>
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={() => setIsWishlistOpen(true)} style={{ backgroundColor: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '8px 12px', borderRadius: '24px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', backdropFilter: 'blur(4px)' }}>
+                ❤️ {wishlist.length}
+              </button>
+              <button onClick={() => setIsCartOpen(true)} style={{ backgroundColor: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '8px 14px', borderRadius: '24px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', backdropFilter: 'blur(4px)' }}>
+                🛒 <span style={{ backgroundColor: '#ffffff', color: '#0284c7', padding: '1px 6px', borderRadius: '10px', fontSize: '11px', fontWeight: 900 }}>{cart.length}</span>
+              </button>
+            </div>
           </div>
 
           {/* Search Box */}
@@ -206,6 +226,37 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Wishlist Drawer Modal */}
+      {isWishlistOpen && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15,23,42,0.6)', zIndex: 200, display: 'flex', justifyContent: 'flex-end', backdropFilter: 'blur(4px)' }}>
+          <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '380px', height: '100%', display: 'flex', flexDirection: 'column', boxShadow: '-10px 0 30px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', padding: '20px', backgroundColor: '#ffffff', flexShrink: 0 }}>
+              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 900, color: '#0f172a' }}>My Wishlist ❤️ ({wishlist.length})</h3>
+              <button onClick={() => setIsWishlistOpen(false)} style={{ background: '#f1f5f9', border: 'none', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontWeight: 'bold', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+              {wishlist.length === 0 ? (
+                <div style={{ textAlign: 'center', marginTop: '80px', color: '#94a3b8' }}>
+                  <div style={{ fontSize: '40px', marginBottom: '10px' }}>🤍</div>
+                  <p style={{ fontSize: '14px', fontWeight: 600 }}>Your wishlist is empty.<br/>Tap the heart icon on any item to save it here.</p>
+                </div>
+              ) : (
+                wishlist.map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f8fafc', paddingBottom: '12px' }}>
+                    <img src={item.image} alt={item.title} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 4px', color: '#1e293b', lineHeight: '1.3' }}>{item.title}</p>
+                      <p style={{ fontSize: '13px', color: '#0284c7', fontWeight: 900, margin: '0 0 8px' }}>₦ {item.price.toLocaleString()}</p>
+                      <button onClick={() => { addToCart(item); toggleWishlist(item); setIsWishlistOpen(false); }} style={{ backgroundColor: '#0284c7', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Move to Cart</button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cart Drawer Modal */}
       {isCartOpen && (
@@ -251,14 +302,18 @@ export default function Home() {
         <div style={{ maxWidth: '900px', margin: '20px auto', padding: '0 16px' }}>
           
           {/* Quick Action Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '24px' }}>
-            <div onClick={() => openSupportWhatsApp("Hello FindAll In 1, I need assistance finding a product.")} style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '14px', textAlign: 'center', border: '1px solid #e2e8f0', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', transition: 'all 0.2s ease' }}>
-              <div style={{ fontSize: '22px', marginBottom: '4px' }}>💬</div>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#1e293b' }}>Customer Support</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
+            <div onClick={() => openSupportWhatsApp("Hello FindAll In 1, I need assistance finding a product.")} style={{ backgroundColor: '#ffffff', padding: '14px 10px', borderRadius: '14px', textAlign: 'center', border: '1px solid #e2e8f0', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+              <div style={{ fontSize: '20px', marginBottom: '4px' }}>💬</div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#1e293b' }}>Support</div>
             </div>
-            <div onClick={() => setIsCartOpen(true)} style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '14px', textAlign: 'center', border: '1px solid #e2e8f0', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', transition: 'all 0.2s ease' }}>
-              <div style={{ fontSize: '22px', marginBottom: '4px' }}>🛒</div>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#1e293b' }}>View Cart ({cart.length})</div>
+            <div onClick={() => setIsWishlistOpen(true)} style={{ backgroundColor: '#ffffff', padding: '14px 10px', borderRadius: '14px', textAlign: 'center', border: '1px solid #e2e8f0', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+              <div style={{ fontSize: '20px', marginBottom: '4px' }}>❤️</div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#1e293b' }}>Wishlist ({wishlist.length})</div>
+            </div>
+            <div onClick={() => setIsCartOpen(true)} style={{ backgroundColor: '#ffffff', padding: '14px 10px', borderRadius: '14px', textAlign: 'center', border: '1px solid #e2e8f0', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+              <div style={{ fontSize: '20px', marginBottom: '4px' }}>🛒</div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#1e293b' }}>Cart ({cart.length})</div>
             </div>
           </div>
 
@@ -283,41 +338,47 @@ export default function Home() {
                 <button onClick={() => setSelectedCategory('All')} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', fontSize: '13px' }}>Show All Items</button>
               </div>
             ) : (
-              filteredInventory.map((item) => (
-                <div 
-                  key={item.id} 
-                  onClick={() => { 
-                    setSelectedProduct(item); 
-                    setCurrentView('details'); 
-                    window.history.pushState({}, '', `?product=${item.id}`);
-                  }} 
-                  style={{ backgroundColor: '#ffffff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', transition: 'transform 0.2s, box-shadow 0.2s' }}
-                >
-                  <div style={{ position: 'relative' }}>
-                    <img src={item.image} alt={item.title} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
-                    <span style={{ position: 'absolute', top: '8px', left: '8px', background: item.condition === 'Brand New' ? '#0284c7' : '#d97706', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', textTransform: 'uppercase', backdropFilter: 'blur(4px)' }}>
-                      {item.condition || 'Used'}
-                    </span>
-                  </div>
-                  <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 800, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{item.category}</div>
-                      <h4 style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 6px', color: '#0f172a', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</h4>
-                      {item.location && <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>📍 {item.location}</div>}
+              filteredInventory.map((item) => {
+                const isWishlisted = wishlist.some(w => w.id === item.id);
+                return (
+                  <div 
+                    key={item.id} 
+                    onClick={() => { 
+                      setSelectedProduct(item); 
+                      setCurrentView('details'); 
+                      window.history.pushState({}, '', `?product=${item.id}`);
+                    }} 
+                    style={{ backgroundColor: '#ffffff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                  >
+                    <div style={{ position: 'relative' }}>
+                      <img src={item.image} alt={item.title} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
+                      <span style={{ position: 'absolute', top: '8px', left: '8px', background: item.condition === 'Brand New' ? '#0284c7' : '#d97706', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', textTransform: 'uppercase', backdropFilter: 'blur(4px)' }}>
+                        {item.condition || 'Used'}
+                      </span>
+                      <button onClick={(e) => toggleWishlist(item, e)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(255,255,255,0.9)', border: 'none', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '14px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+                        {isWishlisted ? '❤️' : '🤍'}
+                      </button>
                     </div>
-                    <div>
-                      <div style={{ fontSize: '15px', fontWeight: 900, color: '#0284c7', marginBottom: '10px' }}>₦ {item.price.toLocaleString()}</div>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button onClick={(e) => { e.stopPropagation(); addToCart(item); }} style={{ flex: 1, backgroundColor: '#0284c7', color: '#ffffff', border: 'none', padding: '8px', borderRadius: '8px', fontWeight: 800, fontSize: '12px', cursor: 'pointer' }}>Buy</button>
-                        <button onClick={(e) => { e.stopPropagation(); copyProductLink(item); }} title="Copy Product Link" style={{ backgroundColor: '#f0f9ff', color: '#0284c7', border: '1px solid #bae6fd', padding: '8px 10px', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>🔗</button>
-                        {isAdminLoggedIn && (
-                          <button onClick={(e) => { e.stopPropagation(); handleDeleteProduct(item.id); }} style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px 10px', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>🗑️</button>
-                        )}
+                    <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 800, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{item.category}</div>
+                        <h4 style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 6px', color: '#0f172a', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</h4>
+                        {item.location && <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>📍 {item.location}</div>}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '15px', fontWeight: 900, color: '#0284c7', marginBottom: '10px' }}>₦ {item.price.toLocaleString()}</div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button onClick={(e) => { e.stopPropagation(); addToCart(item); }} style={{ flex: 1, backgroundColor: '#0284c7', color: '#ffffff', border: 'none', padding: '8px', borderRadius: '8px', fontWeight: 800, fontSize: '12px', cursor: 'pointer' }}>Buy</button>
+                          <button onClick={(e) => { e.stopPropagation(); copyProductLink(item); }} title="Copy Product Link" style={{ backgroundColor: '#f0f9ff', color: '#0284c7', border: '1px solid #bae6fd', padding: '8px 10px', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>🔗</button>
+                          {isAdminLoggedIn && (
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteProduct(item.id); }} style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px 10px', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>🗑️</button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -337,7 +398,12 @@ export default function Home() {
           </button>
           
           <div style={{ background: '#ffffff', borderRadius: '18px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-            <img src={selectedProduct.image} alt={selectedProduct.title} style={{ width: '100%', height: '320px', objectFit: 'cover' }} />
+            <div style={{ position: 'relative' }}>
+              <img src={selectedProduct.image} alt={selectedProduct.title} style={{ width: '100%', height: '320px', objectFit: 'cover' }} />
+              <button onClick={(e) => toggleWishlist(selectedProduct, e)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.9)', border: 'none', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                {wishlist.some(w => w.id === selectedProduct.id) ? '❤️' : '🤍'}
+              </button>
+            </div>
             <div style={{ padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <span style={{ background: '#f0f9ff', color: '#0284c7', padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, border: '1px solid #bae6fd' }}>{selectedProduct.category}</span>
@@ -488,6 +554,9 @@ export default function Home() {
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-around', padding: '12px 0', zIndex: 150, boxShadow: '0 -4px 20px rgba(0,0,0,0.04)' }}>
         <button onClick={() => { setSelectedProduct(null); setCurrentView('catalog'); window.history.pushState({}, '', window.location.pathname); }} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: currentView === 'catalog' ? '#0284c7' : '#64748b', fontSize: '11px', fontWeight: 800, gap: '3px' }}>
           <span style={{ fontSize: '18px' }}>🏠</span> Home
+        </button>
+        <button onClick={() => setIsWishlistOpen(true)} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: '#64748b', fontSize: '11px', fontWeight: '800', gap: '3px' }}>
+          <span style={{ fontSize: '18px' }}>❤️</span> Wishlist ({wishlist.length})
         </button>
         <button onClick={() => setIsCartOpen(true)} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: '#64748b', fontSize: '11px', fontWeight: '800', gap: '3px' }}>
           <span style={{ fontSize: '18px' }}>🛒</span> Cart ({cart.length})
