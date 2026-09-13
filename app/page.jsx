@@ -232,6 +232,24 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', paddingBottom: '100px' }}>
       
+      {/* CSS Keyframes for Smooth Marquee Animation */}
+      <style jsx global>{`
+        @keyframes marquee {
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
+        }
+        .marquee-container {
+          display: flex;
+          width: 100%;
+          overflow: hidden;
+          white-space: nowrap;
+        }
+        .marquee-text {
+          display: inline-block;
+          animation: marquee 20s linear infinite;
+        }
+      `}</style>
+
       {/* Toast Notification */}
       {toastMessage && (
         <div style={{ position: 'fixed', top: '55px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#0284c7', color: '#ffffff', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 700, zIndex: 300, boxShadow: '0 10px 25px rgba(2,132,199,0.3)', backdropFilter: 'blur(8px)' }}>
@@ -240,8 +258,10 @@ export default function Home() {
       )}
 
       {/* Promo Marquee Announcement Bar */}
-      <div style={{ backgroundColor: '#0f172a', color: '#38bdf8', padding: '8px 16px', fontSize: '12px', fontWeight: 800, textAlign: 'center', letterSpacing: '0.3px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-        🔥 Special Notice: Enjoy Swift Nationwide Delivery & Verified Quality Products across All Categories!
+      <div style={{ backgroundColor: '#0f172a', color: '#38bdf8', padding: '9px 0', fontSize: '12px', fontWeight: 800, letterSpacing: '0.3px', overflow: 'hidden' }} className="marquee-container">
+        <div className="marquee-text">
+          🔥 Special Notice: Enjoy Swift Nationwide Delivery & Verified Quality Products across All Categories! Shop with confidence today! 🚀
+        </div>
       </div>
 
       {/* Top Header Banner */}
