@@ -176,14 +176,15 @@ export default function Home() {
     if (error) {
       alert('Sign Up Error: ' + error.message);
     } else if (data?.user) {
+      // Automatically set is_approved to true for instant access
       await supabase.from('profiles').insert([{
         id: data.user.id,
         email: authEmail,
         store_name: registerStoreName,
-        is_approved: false
+        is_approved: true
       }]);
 
-      alert('Account registered successfully! You can now log in.');
+      alert('Account registered and auto-approved successfully! You can now log in.');
       setAuthEmail('');
       setAuthPassword('');
       setRegisterStoreName('');
@@ -231,12 +232,6 @@ export default function Home() {
     e.preventDefault();
     if (!user) {
       alert('You must be logged in as a vendor to post items.');
-      return;
-    }
-
-    const isAdmin = user.email === ADMIN_EMAIL;
-    if (!isAdmin && !userProfile?.is_approved) {
-      alert('Your vendor account is still pending admin approval. You cannot post items yet.');
       return;
     }
 
@@ -485,7 +480,7 @@ export default function Home() {
                   <input type="password" placeholder="••••••••" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1', outline: 'none' }} />
                 </div>
                 <button type="submit" style={{ width: '100%', backgroundColor: '#0284c7', color: '#fff', padding: '14px', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }}>
-                  {isSignUpMode ? 'Register & Request Approval' : 'Log In to Dashboard'}
+                  {isSignUpMode ? 'Register & Start Posting' : 'Log In to Dashboard'}
                 </button>
               </form>
             </div>
@@ -494,34 +489,16 @@ export default function Home() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0f9ff', padding: '12px 14px', borderRadius: '10px', border: '1px solid #bae6fd', marginBottom: '20px' }}>
                 <div>
                   <span style={{ fontSize: '12px', color: '#0369a1', display: 'block', fontWeight: 700 }}>Logged in as: {user.email}</span>
-                  <span style={{ fontSize: '11px', color: isAdminUser ? '#d97706' : (userProfile?.is_approved ? '#16a34a' : '#dc2626'), fontWeight: 800 }}>
-                    {isAdminUser ? '👑 Role: Marketplace Admin' : (userProfile?.is_approved ? '✅ Status: Approved Vendor' : '⏳ Status: Pending Admin Approval')}
+                  <span style={{ fontSize: '11px', color: isAdminUser ? '#d97706' : '#16a34a', fontWeight: 800 }}>
+                    {isAdminUser ? '👑 Role: Marketplace Admin' : '✅ Status: Active Vendor'}
                   </span>
                 </div>
                 <button onClick={handleSignOut} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '6px 10px', borderRadius: '6px', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}>Sign Out</button>
               </div>
 
-              {/* ADMIN APPROVAL SECTION */}
+              {/* ADMIN QUICK MANAGEMENT / DELETE LISTINGS SECTION */}
               {isAdminUser && (
                 <div style={{ marginBottom: '30px' }}>
-                  <div style={{ background: '#fffbeb', padding: '16px', borderRadius: '12px', border: '1px solid #fef3c7', marginBottom: '24px' }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: 900, color: '#b45309', marginBottom: '10px' }}>Pending Vendor Registrations ({pendingVendors.length})</h3>
-                    {pendingVendors.length === 0 ? (
-                      <p style={{ fontSize: '13px', color: '#78350f', margin: 0 }}>No pending vendor requests at the moment.</p>
-                    ) : (
-                      pendingVendors.map((v) => (
-                        <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '10px 12px', borderRadius: '8px', marginBottom: '8px', border: '1px solid #fde68a' }}>
-                          <div>
-                            <p style={{ fontSize: '13px', fontWeight: 800, margin: '0 0 2px' }}>{v.store_name || 'Unnamed Store'}</p>
-                            <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>{v.email}</p>
-                          </div>
-                          <button onClick={() => handleApproveVendor(v.id)} style={{ backgroundColor: '#16a34a', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Approve</button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* ADMIN QUICK MANAGEMENT / DELETE LISTINGS SECTION */}
                   <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: 900, color: '#0f172a', marginBottom: '10px' }}>Manage Live Listings ({inventory.length})</h3>
                     <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
@@ -543,58 +520,51 @@ export default function Home() {
               )}
 
               {/* POST PRODUCT SECTION */}
-              {isAdminUser || userProfile?.is_approved ? (
-                <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 900, marginBottom: '14px' }}>Post New Product</h3>
-                  <form onSubmit={handleAddProduct}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Store / Vendor Name</label>
-                        <input type="text" placeholder="e.g. Tunde Gadgets" required value={newSellerName} onChange={e => setNewSellerName(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
-                      </div>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>WhatsApp No.</label>
-                        <input type="text" placeholder="e.g. 2348147684917" required value={newSellerWhatsApp} onChange={e => setNewSellerWhatsApp(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
-                      </div>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 900, marginBottom: '14px' }}>Post New Product</h3>
+                <form onSubmit={handleAddProduct}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Store / Vendor Name</label>
+                      <input type="text" placeholder="e.g. Tunde Gadgets" required value={newSellerName} onChange={e => setNewSellerName(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
                     </div>
-
-                    <div style={{ marginBottom: '12px' }}>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Product Title</label>
-                      <input type="text" placeholder="e.g. iPhone 13 Pro" required value={newTitle} onChange={e => setNewTitle(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>WhatsApp No.</label>
+                      <input type="text" placeholder="e.g. 2348147684917" required value={newSellerWhatsApp} onChange={e => setNewSellerWhatsApp(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
                     </div>
+                  </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Price (₦)</label>
-                        <input type="number" placeholder="450000" required value={newPrice} onChange={e => setNewPrice(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
-                      </div>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Category</label>
-                        <select value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}>
-                          {categories.filter(c => c.name !== 'All').map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}
-                        </select>
-                      </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Product Title</label>
+                    <input type="text" placeholder="e.g. iPhone 13 Pro" required value={newTitle} onChange={e => setNewTitle(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Price (₦)</label>
+                      <input type="number" placeholder="450000" required value={newPrice} onChange={e => setNewPrice(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
                     </div>
-
-                    <div style={{ marginBottom: '12px' }}>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Image URL</label>
-                      <input type="text" placeholder="Paste image link" value={newImage} onChange={e => setNewImage(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Category</label>
+                      <select value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}>
+                        {categories.filter(c => c.name !== 'All').map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}
+                      </select>
                     </div>
+                  </div>
 
-                    <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Description</label>
-                      <textarea rows="2" placeholder="Description..." value={newDescription} onChange={e => setNewDescription(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}></textarea>
-                    </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Image URL</label>
+                    <input type="text" placeholder="Paste image link" value={newImage} onChange={e => setNewImage(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+                  </div>
 
-                    <button type="submit" style={{ width: '100%', backgroundColor: '#0284c7', color: '#fff', padding: '12px', border: 'none', borderRadius: '10px', fontWeight: 800, cursor: 'pointer' }}>Publish Listing to Marketplace</button>
-                  </form>
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                  <p style={{ fontSize: '14px', color: '#64748b', fontWeight: 700, marginBottom: '8px' }}>Your account is awaiting admin verification.</p>
-                  <p style={{ fontSize: '12px', color: '#94a3b8' }}>Once approved, you will be able to post your products here instantly.</p>
-                </div>
-              )}
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Description</label>
+                    <textarea rows="2" placeholder="Description..." value={newDescription} onChange={e => setNewDescription(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}></textarea>
+                  </div>
+
+                  <button type="submit" style={{ width: '100%', backgroundColor: '#0284c7', color: '#fff', padding: '12px', border: 'none', borderRadius: '10px', fontWeight: 800, cursor: 'pointer' }}>Publish Listing to Marketplace</button>
+                </form>
+              </div>
             </div>
           )}
         </div>
@@ -610,7 +580,7 @@ export default function Home() {
               <input type="text" placeholder="Your Name" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1' }} />
             </div>
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>Phone Number</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>Phone Number</label>
               <input type="tel" placeholder="08140000000" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1' }} />
             </div>
             <div style={{ marginBottom: '14px' }}>
