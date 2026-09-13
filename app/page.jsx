@@ -64,12 +64,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchProducts();
-    
-    // Load saved reviews from localStorage if available
-    const savedReviews = localStorage.getItem('findall_reviews');
-    if (savedReviews) {
-      try { setReviews(JSON.parse(savedReviews)); } catch(e) {}
-    }
+    fetchReviews();
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin') === 'true') {
@@ -99,6 +94,25 @@ export default function Home() {
     }
   };
 
+  const fetchReviews = async () => {
+    const { data, error } = await supabase.from('reviews').select('*').order('id', { ascending: false });
+    if (error) {
+      console.error('Error fetching reviews:', error);
+    } else if (data) {
+      const grouped = {};
+      data.forEach(rev => {
+        if (!grouped[rev.product_id]) grouped[rev.product_id] = [];
+        grouped[rev.product_id].push({
+          name: rev.name,
+          rating: rev.rating,
+          comment: rev.comment,
+          date: new Date(rev.created_at).toLocaleDateString()
+        });
+      });
+      setReviews(grouped);
+    }
+  };
+
   const filteredInventory = inventory.filter(item => {
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -125,27 +139,28 @@ export default function Home() {
     setTimeout(() => setToastMessage(''), 2500);
   };
 
-  const handleAddReview = (e, productId) => {
+  const handleAddReview = async (e, productId) => {
     e.preventDefault();
     if (!reviewName || !reviewComment) return;
 
     const newRev = {
+      product_id: productId,
       name: reviewName,
       rating: Number(reviewRating),
       comment: reviewComment,
-      date: new Date().toLocaleDateString(),
     };
 
-    const productReviews = reviews[productId] || [];
-    const updatedReviews = { ...reviews, [productId]: [newRev, ...productReviews] };
-    
-    setReviews(updatedReviews);
-    localStorage.setItem('findall_reviews', JSON.stringify(updatedReviews));
+    const { error } = await supabase.from('reviews').insert([newRev]);
 
-    setReviewName('');
-    setReviewComment('');
-    setToastMessage('Review submitted successfully! ⭐');
-    setTimeout(() => setToastMessage(''), 3000);
+    if (error) {
+      alert('Error submitting review: ' + error.message);
+    } else {
+      setReviewName('');
+      setReviewComment('');
+      setToastMessage('Review submitted successfully! ⭐');
+      setTimeout(() => setToastMessage(''), 3000);
+      fetchReviews(); // Refresh reviews from Supabase database
+    }
   };
 
   const getAverageRating = (productId) => {
@@ -180,7 +195,6 @@ export default function Home() {
     if (!newTitle || !newPrice) return;
     
     const newItem = {
-      id: Date.now(),
       title: newTitle,
       price: Number(newPrice),
       category: newCategory,
@@ -456,7 +470,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* PRODUCT DETAILS VIEW WITH REVIEWS */}
+      {/* PRODUCT DETAILS VIEW WITH SUPABASE REVIEWS */}
       {currentView === 'details' && selectedProduct && (
         <div style={{ maxWidth: '700px', margin: '24px auto', padding: '0 16px' }}>
           <button 
@@ -498,7 +512,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* CUSTOMER REVIEWS SECTION */}
+          {/* DATABASE REVIEWS SECTION */}
           <div style={{ background: '#ffffff', borderRadius: '18px', padding: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', marginBottom: '16px' }}>Customer Reviews & Ratings ⭐</h3>
             
