@@ -29,6 +29,10 @@ export default function Home() {
   const [wishlist, setWishlist] = useState([]);
   const [reviews, setReviews] = useState({}); // { productId: [{ name, rating, comment, date }] }
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // New Price Filter State (default max set high or dynamic)
+  const [maxPrice, setMaxPrice] = useState(5000000); 
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [currentView, setCurrentView] = useState('catalog'); // catalog, details, checkout, admin
@@ -113,10 +117,12 @@ export default function Home() {
     }
   };
 
+  // Filter logic including category, search query, and max budget price filter
   const filteredInventory = inventory.filter(item => {
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const matchesPrice = item.price <= maxPrice;
+    return matchesCategory && matchesSearch && matchesPrice;
   });
 
   const addToCart = (item) => {
@@ -159,7 +165,7 @@ export default function Home() {
       setReviewComment('');
       setToastMessage('Review submitted successfully! ⭐');
       setTimeout(() => setToastMessage(''), 3000);
-      fetchReviews(); // Refresh reviews from Supabase database
+      fetchReviews(); 
     }
   };
 
@@ -246,7 +252,7 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', paddingBottom: '100px' }}>
       
-      {/* CSS Keyframes for Smooth Marquee Animation */}
+      {/* CSS Keyframes for Marquee Animation */}
       <style jsx global>{`
         @keyframes marquee {
           0% { transform: translateX(100%); }
@@ -384,7 +390,7 @@ export default function Home() {
         <div style={{ maxWidth: '900px', margin: '20px auto', padding: '0 16px' }}>
           
           {/* Quick Action Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
             <div onClick={() => openSupportWhatsApp("Hello FindAll In 1, I need assistance finding a product.")} style={{ backgroundColor: '#ffffff', padding: '14px 10px', borderRadius: '14px', textAlign: 'center', border: '1px solid #e2e8f0', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
               <div style={{ fontSize: '20px', marginBottom: '4px' }}>💬</div>
               <div style={{ fontSize: '12px', fontWeight: 800, color: '#1e293b' }}>Support</div>
@@ -400,7 +406,7 @@ export default function Home() {
           </div>
 
           {/* Categories Horizontal Scroll */}
-          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '24px', scrollbarWidth: 'none' }}>
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', marginBottom: '16px', scrollbarWidth: 'none' }}>
             {categories.map((cat, idx) => (
               <button 
                 key={idx} 
@@ -412,12 +418,46 @@ export default function Home() {
             ))}
           </div>
 
+          {/* PRICE RANGE FILTER COMPONENT */}
+          <div style={{ background: '#ffffff', padding: '16px 20px', borderRadius: '14px', border: '1px solid #e2e8f0', marginBottom: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#1e293b' }}>Filter by Budget (Max Price)</span>
+              <span style={{ fontSize: '14px', fontWeight: 900, color: '#0284c7' }}>₦ {maxPrice.toLocaleString()}</span>
+            </div>
+            <input 
+              type="range" 
+              min="10000" 
+              max="5000000" 
+              step="25000"
+              value={maxPrice} 
+              onChange={(e) => setMaxPrice(Number(e.target.value))}
+              style={{ width: '100%', accentColor: '#0284c7', cursor: 'pointer', marginBottom: '12px' }}
+            />
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {[100000, 250000, 500000, 1000000, 5000000].map((val, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => setMaxPrice(val)}
+                  style={{ background: maxPrice === val ? '#e0f2fe' : '#f8fafc', color: maxPrice === val ? '#0369a1' : '#64748b', border: maxPrice === val ? '1px solid #bae6fd' : '1px solid #e2e8f0', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  {val >= 1000000 ? `₦${val/1000000}M` : `₦${val/1000}k`}
+                </button>
+              ))}
+              <button 
+                onClick={() => setMaxPrice(5000000)}
+                style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
           {/* Product Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '16px' }}>
             {filteredInventory.length === 0 ? (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: '#64748b', marginBottom: '12px' }}>No items found in this category.</p>
-                <button onClick={() => setSelectedCategory('All')} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', fontSize: '13px' }}>Show All Items</button>
+                <p style={{ fontSize: '15px', fontWeight: 700, color: '#64748b', marginBottom: '12px' }}>No items found matching your budget or category.</p>
+                <button onClick={() => { setSelectedCategory('All'); setMaxPrice(5000000); setSearchQuery(''); }} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', fontSize: '13px' }}>Clear Filters</button>
               </div>
             ) : (
               filteredInventory.map((item) => {
@@ -655,7 +695,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' -->
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: '#475569' }}>Category</label>
                     <select value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', background: '#fff', outline: 'none' }}>
