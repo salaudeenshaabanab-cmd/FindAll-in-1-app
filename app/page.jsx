@@ -7,7 +7,6 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = 'https://jqgsksvtkvhwujtpqras.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZ3Nrc3Z0a3Zod3VqdHBxcmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyMTIzOTcsImV4cCI6MjEwNDc4ODM5N30.pB-ed3LSZneH14ub7j9geG6K4L7xO3cuH0jNWE8Jzgg';
 
-// --- YOUR MASTER ADMIN EMAIL ---
 const ADMIN_EMAIL = 'salaudeenshaaban.ab@gmail.com';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -29,7 +28,6 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [inventory, setInventory] = useState([]);
   const [cart, setCart] = useState([]); 
-  const [wishlist, setWishlist] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [maxPrice, setMaxPrice] = useState(5000000); 
 
@@ -38,7 +36,6 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
 
-  // Auth States for Vendors & Admin
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [authEmail, setAuthEmail] = useState('');
@@ -46,10 +43,8 @@ export default function Home() {
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [registerStoreName, setRegisterStoreName] = useState('');
 
-  // Admin Panel Data
   const [pendingVendors, setPendingVendors] = useState([]);
 
-  // New Product Form Inputs
   const [newTitle, setNewTitle] = useState('');
   const [newPrice, setNewPrice] = useState('');
   const [newCategory, setNewCategory] = useState('Phones & Tablets');
@@ -71,9 +66,14 @@ export default function Home() {
   });
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts().then(() => {
+      const params = new URLSearchParams(window.location.search);
+      const productId = params.get('product');
+      if (productId) {
+        loadProductById(productId);
+      }
+    });
 
-    // Check active session on load
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -82,7 +82,6 @@ export default function Home() {
       }
     });
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -98,30 +97,19 @@ export default function Home() {
       setCurrentView('vendorPortal');
     }
 
-    const productId = params.get('product');
-    if (productId) {
-      loadProductById(productId);
-    }
-
     return () => subscription.unsubscribe();
   }, []);
 
   const fetchUserProfile = async (userId) => {
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     if (data) {
       setUserProfile(data);
-    } else if (error) {
-      console.error('Error fetching profile:', error);
     }
-    
-    // If current user is Admin, fetch pending vendors
-    if (userId) {
-      fetchPendingVendors();
-    }
+    fetchPendingVendors();
   };
 
   const fetchPendingVendors = async () => {
-    const { data, error } = await supabase.from('profiles').select('*').eq('is_approved', false);
+    const { data } = await supabase.from('profiles').select('*').eq('is_approved', false);
     if (data) setPendingVendors(data);
   };
 
@@ -136,11 +124,34 @@ export default function Home() {
     }
   };
 
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+
+    const { error } = await supabase.from('products').delete().eq('id', productId);
+    if (error) {
+      alert('Error deleting product: ' + error.message);
+    } else {
+      setToastMessage('Product deleted successfully');
+      setTimeout(() => setToastMessage(''), 2500);
+      fetchProducts();
+      if (selectedProduct && selectedProduct.id === productId) {
+        setCurrentView('catalog');
+        setSelectedProduct(null);
+      }
+    }
+  };
+
   const loadProductById = async (id) => {
     const { data } = await supabase.from('products').select('*').eq('id', id).single();
     if (data) {
       setSelectedProduct(data);
       setCurrentView('details');
+    } else {
+      const found = inventory.find(item => String(item.id) === String(id));
+      if (found) {
+        setSelectedProduct(found);
+        setCurrentView('details');
+      }
     }
   };
 
@@ -150,7 +161,6 @@ export default function Home() {
     else if (data) setInventory(data);
   };
 
-  // Vendor Authentication Handlers
   const handleSignUp = async (e) => {
     e.preventDefault();
     if (!registerStoreName) {
@@ -166,18 +176,14 @@ export default function Home() {
     if (error) {
       alert('Sign Up Error: ' + error.message);
     } else if (data?.user) {
-      const { error: profileError } = await supabase.from('profiles').insert([{
+      await supabase.from('profiles').insert([{
         id: data.user.id,
         email: authEmail,
         store_name: registerStoreName,
         is_approved: false
       }]);
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-      }
-
-      alert('Account registered! Your account is pending review by the marketplace admin.');
+      alert('Account registered successfully! You can now log in.');
       setAuthEmail('');
       setAuthPassword('');
       setRegisterStoreName('');
@@ -195,6 +201,7 @@ export default function Home() {
       setAuthPassword('');
       setToastMessage('Logged in successfully!');
       setTimeout(() => setToastMessage(''), 2500);
+      window.location.reload();
     }
   };
 
@@ -355,7 +362,6 @@ export default function Home() {
       {currentView === 'catalog' && (
         <div style={{ maxWidth: '900px', margin: '20px auto', padding: '0 16px' }}>
           
-          {/* Categories */}
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', marginBottom: '16px', scrollbarWidth: 'none' }}>
             {categories.map((cat, idx) => (
               <button 
@@ -368,14 +374,26 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Product Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '16px' }}>
             {filteredInventory.map((item) => (
               <div 
                 key={item.id} 
-                onClick={() => { setSelectedProduct(item); setCurrentView('details'); window.history.pushState({}, '', `?product=${item.id}`); }} 
-                style={{ backgroundColor: '#ffffff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}
+                onClick={() => { 
+                  setSelectedProduct(item); 
+                  setCurrentView('details'); 
+                  window.history.pushState({}, '', `?product=${item.id}`); 
+                }} 
+                style={{ backgroundColor: '#ffffff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', position: 'relative' }}
               >
+                {isAdminUser && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleDeleteProduct(item.id); }} 
+                    style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(220, 38, 38, 0.9)', color: '#fff', border: 'none', width: '28px', height: '28px', borderRadius: '50%', fontSize: '12px', fontWeight: 900, cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Delete Product"
+                  >
+                    ✕
+                  </button>
+                )}
                 <div style={{ position: 'relative' }}>
                   <img src={item.image} alt={item.title} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
                   <span style={{ position: 'absolute', top: '8px', left: '8px', background: item.condition === 'Brand New' ? '#0284c7' : '#d97706', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
@@ -395,6 +413,42 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* PRODUCT DETAILS VIEW */}
+      {currentView === 'details' && (
+        <div style={{ maxWidth: '650px', margin: '30px auto', background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <button onClick={() => { setCurrentView('catalog'); setSelectedProduct(null); window.history.pushState({}, '', window.location.pathname); }} style={{ background: '#f1f5f9', border: 'none', padding: '6px 12px', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>← Back to Catalog</button>
+            {isAdminUser && selectedProduct && (
+              <button onClick={() => handleDeleteProduct(selectedProduct.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '6px 12px', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>🗑️ Delete Listing</button>
+            )}
+          </div>
+          
+          {selectedProduct ? (
+            <div>
+              <img src={selectedProduct.image} alt={selectedProduct.title} style={{ width: '100%', height: '300px', objectFit: 'cover', borderRadius: '12px', marginBottom: '16px' }} />
+              <span style={{ background: '#0284c7', color: '#fff', fontSize: '11px', fontWeight: 800, padding: '4px 10px', borderRadius: '6px' }}>{selectedProduct.category}</span>
+              <h2 style={{ fontSize: '20px', fontWeight: 900, margin: '10px 0 6px' }}>{selectedProduct.title}</h2>
+              <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 12px' }}>Condition: <b>{selectedProduct.condition}</b> | Location: <b>{selectedProduct.location}</b></p>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: '#0284c7', marginBottom: '16px' }}>₦ {selectedProduct.price.toLocaleString()}</div>
+              
+              <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', marginBottom: '16px', border: '1px solid #f1f5f9' }}>
+                <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 4px', color: '#0f172a' }}>Sold by: {selectedProduct.seller_name}</p>
+                <p style={{ fontSize: '13px', color: '#475569', margin: 0, lineHeight: 1.5 }}>{selectedProduct.description}</p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => addToCart(selectedProduct)} style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', padding: '12px', border: 'none', borderRadius: '10px', fontWeight: 800, cursor: 'pointer' }}>Add to Cart</button>
+                <a href={`https://wa.me/${selectedProduct.seller_whatsapp || FALLBACK_WHATSAPP}?text=Hello,%20I%20am%20interested%20in%20your%20product:%20${encodeURIComponent(selectedProduct.title)}%20priced%20at%20₦${selectedProduct.price.toLocaleString()}`} target="_blank" rel="noreferrer" style={{ flex: 1, backgroundColor: '#25D366', color: '#fff', padding: '12px', textAlign: 'center', borderRadius: '10px', fontWeight: 800, textDecoration: 'none' }}>Chat on WhatsApp</a>
+              </div>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <p style={{ fontWeight: 700, color: '#64748b' }}>Loading product details...</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -449,25 +503,46 @@ export default function Home() {
 
               {/* ADMIN APPROVAL SECTION */}
               {isAdminUser && (
-                <div style={{ marginBottom: '30px', background: '#fffbeb', padding: '16px', borderRadius: '12px', border: '1px solid #fef3c7' }}>
-                  <h3 style={{ fontSize: '15px', fontWeight: 900, color: '#b45309', marginBottom: '10px' }}>Pending Vendor Registrations ({pendingVendors.length})</h3>
-                  {pendingVendors.length === 0 ? (
-                    <p style={{ fontSize: '13px', color: '#78350f', margin: 0 }}>No pending vendor requests at the moment.</p>
-                  ) : (
-                    pendingVendors.map((v) => (
-                      <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '10px 12px', borderRadius: '8px', marginBottom: '8px', border: '1px solid #fde68a' }}>
-                        <div>
-                          <p style={{ fontSize: '13px', fontWeight: 800, margin: '0 0 2px' }}>{v.store_name || 'Unnamed Store'}</p>
-                          <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>{v.email}</p>
+                <div style={{ marginBottom: '30px' }}>
+                  <div style={{ background: '#fffbeb', padding: '16px', borderRadius: '12px', border: '1px solid #fef3c7', marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 900, color: '#b45309', marginBottom: '10px' }}>Pending Vendor Registrations ({pendingVendors.length})</h3>
+                    {pendingVendors.length === 0 ? (
+                      <p style={{ fontSize: '13px', color: '#78350f', margin: 0 }}>No pending vendor requests at the moment.</p>
+                    ) : (
+                      pendingVendors.map((v) => (
+                        <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '10px 12px', borderRadius: '8px', marginBottom: '8px', border: '1px solid #fde68a' }}>
+                          <div>
+                            <p style={{ fontSize: '13px', fontWeight: 800, margin: '0 0 2px' }}>{v.store_name || 'Unnamed Store'}</p>
+                            <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>{v.email}</p>
+                          </div>
+                          <button onClick={() => handleApproveVendor(v.id)} style={{ backgroundColor: '#16a34a', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Approve</button>
                         </div>
-                        <button onClick={() => handleApproveVendor(v.id)} style={{ backgroundColor: '#16a34a', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Approve</button>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
+
+                  {/* ADMIN QUICK MANAGEMENT / DELETE LISTINGS SECTION */}
+                  <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 900, color: '#0f172a', marginBottom: '10px' }}>Manage Live Listings ({inventory.length})</h3>
+                    <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
+                      {inventory.map((item) => (
+                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '8px 12px', borderRadius: '8px', marginBottom: '6px', border: '1px solid #cbd5e1' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                            <img src={item.image} alt="" style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '6px' }} />
+                            <div>
+                              <p style={{ fontSize: '12px', fontWeight: 800, margin: '0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{item.title}</p>
+                              <p style={{ fontSize: '10px', color: '#0284c7', margin: 0, fontWeight: 700 }}>₦{item.price.toLocaleString()}</p>
+                            </div>
+                          </div>
+                          <button onClick={() => handleDeleteProduct(item.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>Delete</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* POST PRODUCT SECTION (Only if Approved or Admin) */}
+              {/* POST PRODUCT SECTION */}
               {isAdminUser || userProfile?.is_approved ? (
                 <div>
                   <h3 style={{ fontSize: '16px', fontWeight: 900, marginBottom: '14px' }}>Post New Product</h3>
@@ -517,7 +592,7 @@ export default function Home() {
               ) : (
                 <div style={{ textAlign: 'center', padding: '20px 0' }}>
                   <p style={{ fontSize: '14px', color: '#64748b', fontWeight: 700, marginBottom: '8px' }}>Your account is awaiting admin verification.</p>
-                  <p style={{ fontSize: '12px', color: '#94a3b8' }}>Once Salaudeen reviews and approves your account, you will be able to post your products here instantly.</p>
+                  <p style={{ fontSize: '12px', color: '#94a3b8' }}>Once approved, you will be able to post your products here instantly.</p>
                 </div>
               )}
             </div>
@@ -535,7 +610,7 @@ export default function Home() {
               <input type="text" placeholder="Your Name" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1' }} />
             </div>
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>Phone Number</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px' }}>Phone Number</label>
               <input type="tel" placeholder="08140000000" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1' }} />
             </div>
             <div style={{ marginBottom: '14px' }}>
