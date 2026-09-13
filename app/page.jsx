@@ -27,6 +27,7 @@ export default function Home() {
   const [inventory, setInventory] = useState([]);
   const [cart, setCart] = useState([]); 
   const [wishlist, setWishlist] = useState([]);
+  const [reviews, setReviews] = useState({}); // { productId: [{ name, rating, comment, date }] }
   const [searchQuery, setSearchQuery] = useState('');
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
@@ -34,6 +35,11 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
+
+  // New Review form inputs
+  const [reviewName, setReviewName] = useState('');
+  const [reviewRating, setReviewRating] = useState('5');
+  const [reviewComment, setReviewComment] = useState('');
 
   // Admin state & form inputs
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -58,6 +64,13 @@ export default function Home() {
 
   useEffect(() => {
     fetchProducts();
+    
+    // Load saved reviews from localStorage if available
+    const savedReviews = localStorage.getItem('findall_reviews');
+    if (savedReviews) {
+      try { setReviews(JSON.parse(savedReviews)); } catch(e) {}
+    }
+
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin') === 'true') {
       setCurrentView('admin');
@@ -110,6 +123,36 @@ export default function Home() {
       setToastMessage(`Added to wishlist ❤️`);
     }
     setTimeout(() => setToastMessage(''), 2500);
+  };
+
+  const handleAddReview = (e, productId) => {
+    e.preventDefault();
+    if (!reviewName || !reviewComment) return;
+
+    const newRev = {
+      name: reviewName,
+      rating: Number(reviewRating),
+      comment: reviewComment,
+      date: new Date().toLocaleDateString(),
+    };
+
+    const productReviews = reviews[productId] || [];
+    const updatedReviews = { ...reviews, [productId]: [newRev, ...productReviews] };
+    
+    setReviews(updatedReviews);
+    localStorage.setItem('findall_reviews', JSON.stringify(updatedReviews));
+
+    setReviewName('');
+    setReviewComment('');
+    setToastMessage('Review submitted successfully! ⭐');
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  const getAverageRating = (productId) => {
+    const prodReviews = reviews[productId];
+    if (!prodReviews || prodReviews.length === 0) return null;
+    const sum = prodReviews.reduce((acc, r) => acc + r.rating, 0);
+    return (sum / prodReviews.length).toFixed(1);
   };
 
   const openSupportWhatsApp = (customMsg) => {
@@ -191,15 +234,20 @@ export default function Home() {
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#0284c7', color: '#ffffff', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 700, zIndex: 300, boxShadow: '0 10px 25px rgba(2,132,199,0.3)', backdropFilter: 'blur(8px)' }}>
+        <div style={{ position: 'fixed', top: '55px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#0284c7', color: '#ffffff', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 700, zIndex: 300, boxShadow: '0 10px 25px rgba(2,132,199,0.3)', backdropFilter: 'blur(8px)' }}>
           {toastMessage}
         </div>
       )}
 
+      {/* Promo Marquee Announcement Bar */}
+      <div style={{ backgroundColor: '#0f172a', color: '#38bdf8', padding: '8px 16px', fontSize: '12px', fontWeight: 800, textAlign: 'center', letterSpacing: '0.3px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        🔥 Special Notice: Enjoy Swift Nationwide Delivery & Verified Quality Products across All Categories!
+      </div>
+
       {/* Top Header Banner */}
-      <div style={{ backgroundColor: '#0284c7', color: '#ffffff', padding: '18px 16px 22px', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 4px 20px rgba(2,132,199,0.2)' }}>
+      <div style={{ backgroundColor: '#0284c7', color: '#ffffff', padding: '16px 16px 20px', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 4px 20px rgba(2,132,199,0.2)' }}>
         <div style={{ maxWidth: '750px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => { setSelectedProduct(null); setCurrentView('catalog'); window.history.pushState({}, '', window.location.pathname); }}>
               <h1 style={{ fontSize: '22px', fontWeight: 900, margin: 0, letterSpacing: '-0.5px', color: '#fff' }}>FindAll <span style={{ fontWeight: 300, color: '#e0f2fe' }}>In 1</span></h1>
             </div>
@@ -340,6 +388,7 @@ export default function Home() {
             ) : (
               filteredInventory.map((item) => {
                 const isWishlisted = wishlist.some(w => w.id === item.id);
+                const avgRating = getAverageRating(item.id);
                 return (
                   <div 
                     key={item.id} 
@@ -361,7 +410,10 @@ export default function Home() {
                     </div>
                     <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
                       <div>
-                        <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 800, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{item.category}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{item.category}</span>
+                          {avgRating && <span style={{ fontSize: '11px', fontWeight: 800, color: '#f59e0b' }}>⭐ {avgRating}</span>}
+                        </div>
                         <h4 style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 6px', color: '#0f172a', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</h4>
                         {item.location && <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>📍 {item.location}</div>}
                       </div>
@@ -384,7 +436,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* PRODUCT DETAILS VIEW */}
+      {/* PRODUCT DETAILS VIEW WITH REVIEWS */}
       {currentView === 'details' && selectedProduct && (
         <div style={{ maxWidth: '700px', margin: '24px auto', padding: '0 16px' }}>
           <button 
@@ -397,7 +449,7 @@ export default function Home() {
             ← Back to Store
           </button>
           
-          <div style={{ background: '#ffffff', borderRadius: '18px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+          <div style={{ background: '#ffffff', borderRadius: '18px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: '30px' }}>
             <div style={{ position: 'relative' }}>
               <img src={selectedProduct.image} alt={selectedProduct.title} style={{ width: '100%', height: '320px', objectFit: 'cover' }} />
               <button onClick={(e) => toggleWishlist(selectedProduct, e)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.9)', border: 'none', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
@@ -424,6 +476,55 @@ export default function Home() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* CUSTOMER REVIEWS SECTION */}
+          <div style={{ background: '#ffffff', borderRadius: '18px', padding: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', marginBottom: '16px' }}>Customer Reviews & Ratings ⭐</h3>
+            
+            {/* Reviews List */}
+            {(!reviews[selectedProduct.id] || reviews[selectedProduct.id].length === 0) ? (
+              <p style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic', marginBottom: '24px' }}>No reviews yet for this product. Be the first to share your feedback!</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+                {reviews[selectedProduct.id].map((rev, idx) => (
+                  <div key={idx} style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 800, fontSize: '13px', color: '#1e293b' }}>{rev.name}</span>
+                      <span style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 800 }}>{'⭐'.repeat(rev.rating)}</span>
+                    </div>
+                    <p style={{ fontSize: '13px', color: '#475569', margin: '4px 0' }}>{rev.comment}</p>
+                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>{rev.date}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Review Form */}
+            <form onSubmit={(e) => handleAddReview(e, selectedProduct.id)} style={{ borderTop: '1px solid #f1f5f9', paddingTop: '20px' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}>Leave a Review</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#64748b' }}>Your Name</label>
+                  <input type="text" placeholder="e.g. Tunde" required value={reviewName} onChange={e => setReviewName(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#64748b' }}>Rating</label>
+                  <select value={reviewRating} onChange={e => setReviewRating(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff', outline: 'none' }}>
+                    <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+                    <option value="4">⭐⭐⭐⭐ (4/5)</option>
+                    <option value="3">⭐⭐⭐ (3/5)</option>
+                    <option value="2">⭐⭐ (2/5)</option>
+                    <option value="1">⭐ (1/5)</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#64748b' }}>Your Review / Feedback</label>
+                <textarea placeholder="How was the product quality or delivery?" required rows="2" value={reviewComment} onChange={e => setReviewComment(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', fontFamily: 'inherit', outline: 'none' }}></textarea>
+              </div>
+              <button type="submit" style={{ backgroundColor: '#0284c7', color: '#fff', padding: '10px 16px', border: 'none', borderRadius: '8px', fontWeight: 800, fontSize: '13px', cursor: 'pointer' }}>Submit Review</button>
+            </form>
           </div>
         </div>
       )}
