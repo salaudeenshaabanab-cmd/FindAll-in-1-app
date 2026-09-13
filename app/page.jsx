@@ -166,7 +166,6 @@ export default function Home() {
     if (error) {
       alert('Sign Up Error: ' + error.message);
     } else if (data?.user) {
-      // Create profile record with is_approved = false
       const { error: profileError } = await supabase.from('profiles').insert([{
         id: data.user.id,
         email: authEmail,
@@ -218,7 +217,7 @@ export default function Home() {
     setCart(prevCart => [...prevCart, item]);
     setToastMessage(`Added to cart`);
     setIsCartOpen(true);
-    setTimeout(() => setToastMessage('3000'), 3000);
+    setTimeout(() => setToastMessage(''), 3000);
   };
 
   const handleAddProduct = async (e) => {
