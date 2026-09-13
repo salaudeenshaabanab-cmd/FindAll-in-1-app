@@ -30,7 +30,7 @@ export default function Home() {
   const [reviews, setReviews] = useState({}); // { productId: [{ name, rating, comment, date }] }
   const [searchQuery, setSearchQuery] = useState('');
   
-  // New Price Filter State (default max set high or dynamic)
+  // Price Filter State
   const [maxPrice, setMaxPrice] = useState(5000000); 
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -40,7 +40,7 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // New Review form inputs
+  // Review form inputs
   const [reviewName, setReviewName] = useState('');
   const [reviewRating, setReviewRating] = useState('5');
   const [reviewComment, setReviewComment] = useState('');
@@ -695,7 +695,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' -->
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: '#475569' }}>Category</label>
                     <select value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', background: '#fff', outline: 'none' }}>
