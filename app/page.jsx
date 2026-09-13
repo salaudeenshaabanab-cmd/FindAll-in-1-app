@@ -66,6 +66,14 @@ export default function Home() {
   });
 
   useEffect(() => {
+    // Check if user just confirmed their email via redirect hash token
+    const hash = window.location.hash;
+    if (hash && (hash.includes('type=signup') || hash.includes('type=recovery'))) {
+      setToastMessage('🎉 Email confirmed successfully! You can now log in.');
+      setCurrentView('vendorPortal');
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+
     fetchProducts().then(() => {
       const params = new URLSearchParams(window.location.search);
       const productId = params.get('product');
@@ -111,17 +119,6 @@ export default function Home() {
   const fetchPendingVendors = async () => {
     const { data } = await supabase.from('profiles').select('*').eq('is_approved', false);
     if (data) setPendingVendors(data);
-  };
-
-  const handleApproveVendor = async (vendorId) => {
-    const { error } = await supabase.from('profiles').update({ is_approved: true }).eq('id', vendorId);
-    if (error) {
-      alert('Error approving vendor: ' + error.message);
-    } else {
-      setToastMessage('Vendor approved successfully!');
-      setTimeout(() => setToastMessage(''), 2500);
-      fetchPendingVendors();
-    }
   };
 
   const handleDeleteProduct = async (productId) => {
@@ -176,7 +173,6 @@ export default function Home() {
     if (error) {
       alert('Sign Up Error: ' + error.message);
     } else if (data?.user) {
-      // Automatically set is_approved to true for instant access
       await supabase.from('profiles').insert([{
         id: data.user.id,
         email: authEmail,
@@ -184,7 +180,7 @@ export default function Home() {
         is_approved: true
       }]);
 
-      alert('Account registered and auto-approved successfully! You can now log in.');
+      alert('Account registered successfully! Check your email to confirm if confirmation is enabled, or log in now.');
       setAuthEmail('');
       setAuthPassword('');
       setRegisterStoreName('');
