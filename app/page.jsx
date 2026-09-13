@@ -45,6 +45,7 @@ export default function Home() {
 
   const [pendingVendors, setPendingVendors] = useState([]);
 
+  // New product input states (including status tags)
   const [newTitle, setNewTitle] = useState('');
   const [newPrice, setNewPrice] = useState('');
   const [newCategory, setNewCategory] = useState('Phones & Tablets');
@@ -54,6 +55,7 @@ export default function Home() {
   const [newImage, setNewImage] = useState('');
   const [newSellerName, setNewSellerName] = useState('');
   const [newSellerWhatsApp, setNewSellerWhatsApp] = useState('');
+  const [newStatus, setNewStatus] = useState('In Stock');
 
   const FALLBACK_WHATSAPP = '2348147684917';
 
@@ -165,9 +167,14 @@ export default function Home() {
       return;
     }
 
+    const currentOrigin = window.location.origin;
+
     const { data, error } = await supabase.auth.signUp({ 
       email: authEmail, 
-      password: authPassword 
+      password: authPassword,
+      options: {
+        emailRedirectTo: currentOrigin
+      }
     });
 
     if (error) {
@@ -180,7 +187,7 @@ export default function Home() {
         is_approved: true
       }]);
 
-      alert('Account registered successfully! Check your email to confirm if confirmation is enabled, or log in now.');
+      alert('Account registered successfully! Check your email or sign in.');
       setAuthEmail('');
       setAuthPassword('');
       setRegisterStoreName('');
@@ -246,7 +253,8 @@ export default function Home() {
       description: newDescription || 'Verified quality product listed on FindAll In 1 marketplace.',
       seller_name: newSellerName,
       seller_whatsapp: newSellerWhatsApp,
-      vendor_id: user.id 
+      vendor_id: user.id,
+      status: newStatus // Storing the status tag
     };
     
     const { error } = await supabase.from('products').insert([newItem]);
@@ -259,6 +267,7 @@ export default function Home() {
       setNewPrice('');
       setNewDescription('');
       setNewImage('');
+      setNewStatus('In Stock');
       fetchProducts();
       setCurrentView('catalog');
     }
@@ -387,9 +396,17 @@ export default function Home() {
                 )}
                 <div style={{ position: 'relative' }}>
                   <img src={item.image} alt={item.title} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
+                  {/* Condition Badge */}
                   <span style={{ position: 'absolute', top: '8px', left: '8px', background: item.condition === 'Brand New' ? '#0284c7' : '#d97706', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
                     {item.condition || 'Used'}
                   </span>
+
+                  {/* Status Tag Badge */}
+                  {item.status && (
+                    <span style={{ position: 'absolute', bottom: '8px', left: '8px', background: item.status === 'In Stock' ? '#16a34a' : item.status === 'Low Stock' ? '#ca8a04' : '#9333ea', color: '#fff', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                      {item.status}
+                    </span>
+                  )}
                 </div>
                 <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
                   <div>
@@ -419,7 +436,14 @@ export default function Home() {
           
           {selectedProduct ? (
             <div>
-              <img src={selectedProduct.image} alt={selectedProduct.title} style={{ width: '100%', height: '300px', objectFit: 'cover', borderRadius: '12px', marginBottom: '16px' }} />
+              <div style={{ position: 'relative', marginBottom: '16px' }}>
+                <img src={selectedProduct.image} alt={selectedProduct.title} style={{ width: '100%', height: '300px', objectFit: 'cover', borderRadius: '12px' }} />
+                {selectedProduct.status && (
+                  <span style={{ position: 'absolute', bottom: '12px', left: '12px', background: selectedProduct.status === 'In Stock' ? '#16a34a' : selectedProduct.status === 'Low Stock' ? '#ca8a04' : '#9333ea', color: '#fff', fontSize: '11px', fontWeight: 800, padding: '4px 8px', borderRadius: '6px' }}>
+                    {selectedProduct.status}
+                  </span>
+                )}
+              </div>
               <span style={{ background: '#0284c7', color: '#fff', fontSize: '11px', fontWeight: 800, padding: '4px 10px', borderRadius: '6px' }}>{selectedProduct.category}</span>
               <h2 style={{ fontSize: '20px', fontWeight: 900, margin: '10px 0 6px' }}>{selectedProduct.title}</h2>
               <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 12px' }}>Condition: <b>{selectedProduct.condition}</b> | Location: <b>{selectedProduct.location}</b></p>
@@ -504,7 +528,7 @@ export default function Home() {
                             <img src={item.image} alt="" style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '6px' }} />
                             <div>
                               <p style={{ fontSize: '12px', fontWeight: 800, margin: '0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{item.title}</p>
-                              <p style={{ fontSize: '10px', color: '#0284c7', margin: 0, fontWeight: 700 }}>₦{item.price.toLocaleString()}</p>
+                              <p style={{ fontSize: '10px', color: '#0284c7', margin: 0, fontWeight: 700 }}>₦{item.price.toLocaleString()} ({item.status || 'In Stock'})</p>
                             </div>
                           </div>
                           <button onClick={() => handleDeleteProduct(item.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>Delete</button>
@@ -546,6 +570,17 @@ export default function Home() {
                         {categories.filter(c => c.name !== 'All').map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}
                       </select>
                     </div>
+                  </div>
+
+                  {/* Availability Status Tag Selector */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Availability Status Tag</label>
+                    <select value={newStatus} onChange={e => setNewStatus(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}>
+                      <option value="In Stock">🟢 In Stock</option>
+                      <option value="Low Stock">⚠️ Low Stock</option>
+                      <option value="Featured">⭐ Featured Item</option>
+                      <option value="Flash Sale">🔥 Flash Sale</option>
+                    </select>
                   </div>
 
                   <div style={{ marginBottom: '12px' }}>
